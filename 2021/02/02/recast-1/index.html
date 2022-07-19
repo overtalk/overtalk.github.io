@@ -1,0 +1,702 @@
+<!DOCTYPE html>
+<html lang=zh>
+<head>
+  <meta charset="utf-8">
+  
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no, minimal-ui">
+  <meta name="renderer" content="webkit">
+  <meta http-equiv="Cache-Control" content="no-transform" />
+  <meta http-equiv="Cache-Control" content="no-siteapp" />
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <meta name="format-detection" content="telephone=no,email=no,adress=no">
+  <!-- Color theme for statusbar -->
+  <meta name="theme-color" content="#000000" />
+  <!-- 强制页面在当前窗口以独立页面显示,防止别人在框架里调用页面 -->
+  <meta http-equiv="window-target" content="_top" />
+  
+  
+  <title>导航网格-基础概念&amp;数据结构 | Overtalk</title>
+  <meta name="description" content="recastnavigation 导读，看了很多大佬写的博客，自己进行一下总结 本文中提到的数据结构都在 Recast.h 中 RecastNavigation 项目地址  basicAABB(Axis-aligned bounding box) 坐标轴对齐的包围盒，它被定义为包含该对象，且边平行于坐标轴的最小六面体    AABB内的点满足以下条件： 123xmin≤x≤xmaxymin≤y≤">
+<meta name="keywords" content="cpp,recastnavigation">
+<meta property="og:type" content="article">
+<meta property="og:title" content="导航网格-基础概念&amp;数据结构">
+<meta property="og:url" content="https:&#x2F;&#x2F;overtalk.site&#x2F;2021&#x2F;02&#x2F;02&#x2F;recast-1&#x2F;index.html">
+<meta property="og:site_name" content="QinHan&#39;s Site">
+<meta property="og:description" content="recastnavigation 导读，看了很多大佬写的博客，自己进行一下总结 本文中提到的数据结构都在 Recast.h 中 RecastNavigation 项目地址  basicAABB(Axis-aligned bounding box) 坐标轴对齐的包围盒，它被定义为包含该对象，且边平行于坐标轴的最小六面体    AABB内的点满足以下条件： 123xmin≤x≤xmaxymin≤y≤">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:image" content="https:&#x2F;&#x2F;overtalk.site&#x2F;images&#x2F;posts&#x2F;recast-1&#x2F;aabb.png">
+<meta property="og:image" content="https:&#x2F;&#x2F;overtalk.site&#x2F;images&#x2F;posts&#x2F;recast-1&#x2F;compactSpan.png">
+<meta property="og:image" content="https:&#x2F;&#x2F;overtalk.site&#x2F;images&#x2F;posts&#x2F;recast-1&#x2F;build_type.png">
+<meta property="og:image" content="https:&#x2F;&#x2F;overtalk.site&#x2F;images&#x2F;posts&#x2F;recast-1&#x2F;choose_obj.png">
+<meta property="og:image" content="https:&#x2F;&#x2F;overtalk.site&#x2F;images&#x2F;posts&#x2F;recast-1&#x2F;obj.png">
+<meta property="og:updated_time" content="2022-07-19T07:53:37.897Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https:&#x2F;&#x2F;overtalk.site&#x2F;images&#x2F;posts&#x2F;recast-1&#x2F;aabb.png">
+  <!-- Canonical links -->
+  <link rel="canonical" href="https://overtalk.site/2021/02/02/recast-1/index.html">
+  
+    <link rel="alternate" href="/atom.xml" title="QinHan&#39;s Site" type="application/atom+xml">
+  
+  
+    <link rel="icon" href="/favicon.png" type="image/x-icon">
+  
+  <link rel="stylesheet" href="/css/style.css">
+  
+  
+  
+  
+    <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/gitalk@1.4.0/dist/gitalk.min.css">
+  
+</head>
+
+
+<body class="main-center theme-black" itemscope itemtype="http://schema.org/WebPage">
+  <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+  <div class="slimContent">
+    <div class="navbar-header">
+      
+      
+      <div class="profile-block text-center">
+        <a id="avatar" href="https://github.com/overtalk" target="_blank">
+          <img class="img-circle img-rotate" src="/images/avatar.png" width="200" height="200">
+        </a>
+        <h2 id="name" class="hidden-xs hidden-sm">QinHan</h2>
+        <h3 id="title" class="hidden-xs hidden-sm hidden-md">Game Developer &amp; Designer</h3>
+        <small id="location" class="text-muted hidden-xs hidden-sm"><i class="icon icon-map-marker"></i> Shanghai, China</small>
+      </div>
+      
+      <div class="search" id="search-form-wrap">
+
+    <form class="search-form sidebar-form">
+        <div class="input-group">
+            <input type="text" class="search-form-input form-control" placeholder="搜索" />
+            <span class="input-group-btn">
+                <button type="submit" class="search-form-submit btn btn-flat" onclick="return false;"><i class="icon icon-search"></i></button>
+            </span>
+        </div>
+    </form>
+    <div class="ins-search">
+  <div class="ins-search-mask"></div>
+  <div class="ins-search-container">
+    <div class="ins-input-wrapper">
+      <input type="text" class="ins-search-input" placeholder="想要查找什么..." x-webkit-speech />
+      <button type="button" class="close ins-close ins-selectable" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button>
+    </div>
+    <div class="ins-section-wrapper">
+      <div class="ins-section-container"></div>
+    </div>
+  </div>
+</div>
+
+
+</div>
+      <button class="navbar-toggle collapsed" type="button" data-toggle="collapse" data-target="#main-navbar" aria-controls="main-navbar" aria-expanded="false">
+        <span class="sr-only">Toggle navigation</span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+    </div>
+    <nav id="main-navbar" class="collapse navbar-collapse" itemscope itemtype="http://schema.org/SiteNavigationElement" role="navigation">
+      <ul class="nav navbar-nav main-nav menu-highlight">
+        
+        
+        <li class="menu-item menu-item-home">
+          <a href="/.">
+            
+            <i class="icon icon-home-fill"></i>
+            
+            <span class="menu-title">首页</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives">
+            
+            <i class="icon icon-archives-fill"></i>
+            
+            <span class="menu-title">归档</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories">
+            
+            <i class="icon icon-folder"></i>
+            
+            <span class="menu-title">分类</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags">
+            
+            <i class="icon icon-tags"></i>
+            
+            <span class="menu-title">标签</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-repository">
+          <a href="/repository">
+            
+            <i class="icon icon-project"></i>
+            
+            <span class="menu-title">项目</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-links">
+          <a href="/links">
+            
+            <i class="icon icon-friendship"></i>
+            
+            <span class="menu-title">友链</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about">
+            
+            <i class="icon icon-cup-fill"></i>
+            
+            <span class="menu-title">关于</span>
+          </a>
+        </li>
+        
+      </ul>
+      
+	
+    <ul class="social-links">
+    	
+        <li><a href="https://github.com/overtalk" target="_blank" title="Github" data-toggle=tooltip data-placement=top><i class="icon icon-github"></i></a></li>
+        
+        <li><a href="/atom.xml" target="_blank" title="Rss" data-toggle=tooltip data-placement=top><i class="icon icon-rss"></i></a></li>
+        
+    </ul>
+
+    </nav>
+  </div>
+</header>
+
+  
+    <aside class="sidebar" itemscope itemtype="http://schema.org/WPSideBar">
+  <div class="slimContent">
+    
+      <div class="widget">
+    <h3 class="widget-title">公告</h3>
+    <div class="widget-body">
+        <div id="board">
+            <div class="content">
+                <p>欢迎交流与分享经验!</p><p>邮箱：qinhan_shu@163.com</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">分类</h3>
+    <div class="widget-body">
+      <ul class="category-list"><li class="category-list-item"><a class="category-list-link" href="/categories/fragment/">fragment</a><span class="category-list-count">3</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/interview/">interview</a><span class="category-list-count">4</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/jewellery/">jewellery</a><span class="category-list-count">4</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/linux/">linux</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/minio/">minio</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/mongo/">mongo</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/rtc/">rtc</a><span class="category-list-count">3</span><ul class="category-list-child"><li class="category-list-item"><a class="category-list-link" href="/categories/rtc/book/">book</a><span class="category-list-count">1</span><ul class="category-list-child"><li class="category-list-item"><a class="category-list-link" href="/categories/rtc/book/freeswitch/">freeswitch</a><span class="category-list-count">1</span></li></ul></li></ul></li><li class="category-list-item"><a class="category-list-link" href="/categories/%E7%BC%96%E7%A8%8B/">编程</a><span class="category-list-count">141</span><ul class="category-list-child"><li class="category-list-item"><a class="category-list-link" href="/categories/%E7%BC%96%E7%A8%8B/%E6%B8%B8%E6%88%8F/">游戏</a><span class="category-list-count">1</span></li></ul></li><li class="category-list-item"><a class="category-list-link" href="/categories/%E9%9A%8F%E7%AC%94/">随笔</a><span class="category-list-count">2</span></li></ul>
+    </div>
+  </div>
+
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">标签</h3>
+    <div class="widget-body">
+      <ul class="tag-list" itemprop="keywords"><li class="tag-list-item"><a class="tag-list-link" href="/tags/CI-CD/" rel="tag">CI/CD</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Docker/" rel="tag">Docker</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Golang/" rel="tag">Golang</a><span class="tag-list-count">35</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Nagle/" rel="tag">Nagle</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Network/" rel="tag">Network</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Redis/" rel="tag">Redis</a><span class="tag-list-count">6</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Redis%E5%A4%87%E4%BB%BD/" rel="tag">Redis备份</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Shadowsocks/" rel="tag">Shadowsocks</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Socks5/" rel="tag">Socks5</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/algorithm/" rel="tag">algorithm</a><span class="tag-list-count">8</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/clion/" rel="tag">clion</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/cpp/" rel="tag">cpp</a><span class="tag-list-count">50</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/docker/" rel="tag">docker</a><span class="tag-list-count">3</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/dw/" rel="tag">dw</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/endian/" rel="tag">endian</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/epoll/" rel="tag">epoll</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/freeswitch/" rel="tag">freeswitch</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/git/" rel="tag">git</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/gpg/" rel="tag">gpg</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/interview/" rel="tag">interview</a><span class="tag-list-count">4</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/io/" rel="tag">io</a><span class="tag-list-count">3</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/ip/" rel="tag">ip</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/iptables/" rel="tag">iptables</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/k8s/" rel="tag">k8s</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/kernal/" rel="tag">kernal</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/linux/" rel="tag">linux</a><span class="tag-list-count">8</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/loadbalance/" rel="tag">loadbalance</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/lock-free/" rel="tag">lock-free</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/lua/" rel="tag">lua</a><span class="tag-list-count">9</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/mac/" rel="tag">mac</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/mongo/" rel="tag">mongo</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/mysql/" rel="tag">mysql</a><span class="tag-list-count">3</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/network/" rel="tag">network</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/python/" rel="tag">python</a><span class="tag-list-count">3</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/recastnavigation/" rel="tag">recastnavigation</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/regex/" rel="tag">regex</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/rtc/" rel="tag">rtc</a><span class="tag-list-count">3</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/service-mesh/" rel="tag">service mesh</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/shadowsocks/" rel="tag">shadowsocks</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/shell/" rel="tag">shell</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/ssh/" rel="tag">ssh</a><span class="tag-list-count">3</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/systemcall/" rel="tag">systemcall</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/systemd/" rel="tag">systemd</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/tcp/" rel="tag">tcp</a><span class="tag-list-count">6</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E4%B8%AA%E4%BA%BA%E7%BD%91%E7%9B%98/" rel="tag">个人网盘</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%B9%B6%E5%8F%91/" rel="tag">并发</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E6%B8%B8%E6%88%8F/" rel="tag">游戏</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E9%9A%8F%E7%AC%94/" rel="tag">随笔</a><span class="tag-list-count">2</span></li></ul>
+    </div>
+  </div>
+
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">标签云</h3>
+    <div class="widget-body tagcloud">
+      <a href="/tags/CI-CD/" style="font-size: 13px;">CI/CD</a> <a href="/tags/Docker/" style="font-size: 13px;">Docker</a> <a href="/tags/Golang/" style="font-size: 13.88px;">Golang</a> <a href="/tags/Nagle/" style="font-size: 13px;">Nagle</a> <a href="/tags/Network/" style="font-size: 13px;">Network</a> <a href="/tags/Redis/" style="font-size: 13.5px;">Redis</a> <a href="/tags/Redis%E5%A4%87%E4%BB%BD/" style="font-size: 13px;">Redis备份</a> <a href="/tags/Shadowsocks/" style="font-size: 13px;">Shadowsocks</a> <a href="/tags/Socks5/" style="font-size: 13px;">Socks5</a> <a href="/tags/algorithm/" style="font-size: 13.63px;">algorithm</a> <a href="/tags/clion/" style="font-size: 13px;">clion</a> <a href="/tags/cpp/" style="font-size: 14px;">cpp</a> <a href="/tags/docker/" style="font-size: 13.25px;">docker</a> <a href="/tags/dw/" style="font-size: 13px;">dw</a> <a href="/tags/endian/" style="font-size: 13px;">endian</a> <a href="/tags/epoll/" style="font-size: 13px;">epoll</a> <a href="/tags/freeswitch/" style="font-size: 13px;">freeswitch</a> <a href="/tags/git/" style="font-size: 13px;">git</a> <a href="/tags/gpg/" style="font-size: 13px;">gpg</a> <a href="/tags/interview/" style="font-size: 13.38px;">interview</a> <a href="/tags/io/" style="font-size: 13.25px;">io</a> <a href="/tags/ip/" style="font-size: 13.13px;">ip</a> <a href="/tags/iptables/" style="font-size: 13px;">iptables</a> <a href="/tags/k8s/" style="font-size: 13px;">k8s</a> <a href="/tags/kernal/" style="font-size: 13px;">kernal</a> <a href="/tags/linux/" style="font-size: 13.63px;">linux</a> <a href="/tags/loadbalance/" style="font-size: 13.13px;">loadbalance</a> <a href="/tags/lock-free/" style="font-size: 13px;">lock-free</a> <a href="/tags/lua/" style="font-size: 13.75px;">lua</a> <a href="/tags/mac/" style="font-size: 13.13px;">mac</a> <a href="/tags/mongo/" style="font-size: 13px;">mongo</a> <a href="/tags/mysql/" style="font-size: 13.25px;">mysql</a> <a href="/tags/network/" style="font-size: 13px;">network</a> <a href="/tags/python/" style="font-size: 13.25px;">python</a> <a href="/tags/recastnavigation/" style="font-size: 13px;">recastnavigation</a> <a href="/tags/regex/" style="font-size: 13px;">regex</a> <a href="/tags/rtc/" style="font-size: 13.25px;">rtc</a> <a href="/tags/service-mesh/" style="font-size: 13px;">service mesh</a> <a href="/tags/shadowsocks/" style="font-size: 13px;">shadowsocks</a> <a href="/tags/shell/" style="font-size: 13.13px;">shell</a> <a href="/tags/ssh/" style="font-size: 13.25px;">ssh</a> <a href="/tags/systemcall/" style="font-size: 13.13px;">systemcall</a> <a href="/tags/systemd/" style="font-size: 13px;">systemd</a> <a href="/tags/tcp/" style="font-size: 13.5px;">tcp</a> <a href="/tags/%E4%B8%AA%E4%BA%BA%E7%BD%91%E7%9B%98/" style="font-size: 13px;">个人网盘</a> <a href="/tags/%E5%B9%B6%E5%8F%91/" style="font-size: 13px;">并发</a> <a href="/tags/%E6%B8%B8%E6%88%8F/" style="font-size: 13px;">游戏</a> <a href="/tags/%E9%9A%8F%E7%AC%94/" style="font-size: 13.13px;">随笔</a>
+    </div>
+  </div>
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">归档</h3>
+    <div class="widget-body">
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2022/07/">七月 2022</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/02/">二月 2021</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/01/">一月 2021</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2020/11/">十一月 2020</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2020/10/">十月 2020</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2020/08/">八月 2020</a><span class="archive-list-count">2</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2020/07/">七月 2020</a><span class="archive-list-count">15</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2020/06/">六月 2020</a><span class="archive-list-count">3</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2020/05/">五月 2020</a><span class="archive-list-count">6</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2020/04/">四月 2020</a><span class="archive-list-count">14</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2020/03/">三月 2020</a><span class="archive-list-count">16</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2020/02/">二月 2020</a><span class="archive-list-count">15</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2020/01/">一月 2020</a><span class="archive-list-count">13</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2019/12/">十二月 2019</a><span class="archive-list-count">20</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2019/11/">十一月 2019</a><span class="archive-list-count">6</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2019/10/">十月 2019</a><span class="archive-list-count">25</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2019/09/">九月 2019</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2019/08/">八月 2019</a><span class="archive-list-count">2</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2019/07/">七月 2019</a><span class="archive-list-count">9</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2019/04/">四月 2019</a><span class="archive-list-count">2</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2019/03/">三月 2019</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2018/11/">十一月 2018</a><span class="archive-list-count">9</span></li></ul>
+    </div>
+  </div>
+
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">最新文章</h3>
+    <div class="widget-body">
+      <ul class="recent-post-list list-unstyled no-thumbnail">
+        
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                
+              </p>
+              <p class="item-title">
+                <a href="/2022/07/19/bitmap/" class="title">bitmap</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2022-07-19T15:47:57.000Z" itemprop="datePublished">2022-07-19</time>
+              </p>
+            </div>
+          </li>
+          
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                <a class="category-link" href="/categories/%E7%BC%96%E7%A8%8B/">编程</a>
+              </p>
+              <p class="item-title">
+                <a href="/2021/02/02/recast-1/" class="title">导航网格-基础概念&amp;数据结构</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2021-02-02T16:38:43.000Z" itemprop="datePublished">2021-02-02</time>
+              </p>
+            </div>
+          </li>
+          
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                <a class="category-link" href="/categories/mongo/">mongo</a>
+              </p>
+              <p class="item-title">
+                <a href="/2021/01/19/mongo-metas/" class="title">mongo 杂记</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2021-01-19T10:22:54.000Z" itemprop="datePublished">2021-01-19</time>
+              </p>
+            </div>
+          </li>
+          
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                <a class="category-link" href="/categories/%E7%BC%96%E7%A8%8B/">编程</a>
+              </p>
+              <p class="item-title">
+                <a href="/2020/11/08/py-attribute/" class="title">Python 如何查找属性</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2020-11-08T15:21:28.000Z" itemprop="datePublished">2020-11-08</time>
+              </p>
+            </div>
+          </li>
+          
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                <a class="category-link" href="/categories/%E7%BC%96%E7%A8%8B/">编程</a>
+              </p>
+              <p class="item-title">
+                <a href="/2020/10/10/network-tcp-optimization/" class="title">Linux TCP/IP 性能调优</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2020-10-10T03:51:46.000Z" itemprop="datePublished">2020-10-10</time>
+              </p>
+            </div>
+          </li>
+          
+      </ul>
+    </div>
+  </div>
+  
+
+    
+  </div>
+</aside>
+
+  
+  
+<main class="main" role="main">
+  <div class="content">
+  <article id="post-recast-1" class="article article-type-post" itemscope itemtype="http://schema.org/BlogPosting">
+    
+    <div class="article-header">
+      
+        
+  
+    <h1 class="article-title" itemprop="name">
+      导航网格-基础概念&amp;数据结构
+    </h1>
+  
+
+      
+      <div class="article-meta">
+        <span class="article-date">
+    <i class="icon icon-calendar-check"></i>
+	<a href="/2021/02/02/recast-1/" class="article-date">
+	  <time datetime="2021-02-02T16:38:43.000Z" itemprop="datePublished">2021-02-02</time>
+	</a>
+</span>
+        
+  <span class="article-category">
+    <i class="icon icon-folder"></i>
+    <a class="article-category-link" href="/categories/%E7%BC%96%E7%A8%8B/">编程</a>
+  </span>
+
+        
+  <span class="article-tag">
+    <i class="icon icon-tags"></i>
+	<a class="article-tag-link" href="/tags/cpp/" rel="tag">cpp</a>, <a class="article-tag-link" href="/tags/recastnavigation/" rel="tag">recastnavigation</a>
+  </span>
+
+
+        
+	<span class="article-read hidden-xs">
+	    <i class="icon icon-eye-fill" aria-hidden="true"></i>
+	    <span id="busuanzi_container_page_pv">
+			<span id="busuanzi_value_page_pv">0</span>
+		</span>
+	</span>
+
+
+        <span class="post-comment"><i class="icon icon-comment"></i> <a href="/2021/02/02/recast-1/#comments" class="article-comment-link">评论</a></span>
+        
+      </div>
+    </div>
+    <div class="article-entry marked-body" itemprop="articleBody">
+      
+        <blockquote>
+<p>recastnavigation 导读，看了很多大佬写的博客，自己进行一下总结</p>
+<p>本文中提到的数据结构都在 <code>Recast.h</code> 中</p>
+<p><a href="https://github.com/recastnavigation/recastnavigation" target="_blank" rel="noopener">RecastNavigation 项目地址</a></p>
+</blockquote>
+<h1 id="basic"><a href="#basic" class="headerlink" title="basic"></a>basic</h1><h2 id="AABB-Axis-aligned-bounding-box"><a href="#AABB-Axis-aligned-bounding-box" class="headerlink" title="AABB(Axis-aligned bounding box)"></a>AABB(Axis-aligned bounding box)</h2><ul>
+<li>坐标轴对齐的包围盒，它被定义为包含该对象，且边平行于坐标轴的最小六面体</li>
+</ul>
+<p><img src="/images/posts/recast-1/aabb.png" alt="AABB"></p>
+<ul>
+<li><p>AABB内的点满足以下条件：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">xmin≤x≤xmax</span><br><span class="line">ymin≤y≤ymax</span><br><span class="line">zmin≤z≤zmax</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>特别重要的两个顶点为：Pmin = [Xmin Ymin Zmin]，Pmax = [ Xmax Ymax Zmax]</p>
+</li>
+<li><p>recast项目中用float bmin[3], bmax[3];来描述一个AABB</p>
+</li>
+</ul>
+<h2 id="如何理解体素？"><a href="#如何理解体素？" class="headerlink" title="如何理解体素？"></a>如何理解体素？</h2><ul>
+<li>从数据结构上来理解也许非常简单。</li>
+<li>一般模型存储的是顶点和面等数据，每个顶点在无限空间的任意一个位置。而体素空间是一个有限空间，包含了 width<em>depth</em>height 个体素，每个体素大小是固定的，在Recast中由CellSize和CellHeight决定。可想象一个魔方，每一块大小为cellSize<em>cellHeight，一共有widthheight</em>depth大小。</li>
+<li>体素化的过程就是求得模型的包围盒，在xz轴上以CellSize划分，在y轴上以CellHeight划分，得到一个[x][z][y]体素数组，再根据这个体素是否包含原模型的面，决定这个体素是实心还是空心，可行走还是不可行走等属性。</li>
+</ul>
+<h2 id="区间-rcSpan"><a href="#区间-rcSpan" class="headerlink" title="区间 rcSpan"></a>区间 rcSpan</h2><ul>
+<li>一列（xz平面投影相同）连续的体素盒子</li>
+<li>由rcSpan这个结构体来表示</li>
+<li>smin和smax表示连续体素的最低y坐标和最高y坐标（底面和顶面）</li>
+<li>next指针实现了一个链表，方便管理投影相同的所有区间（区间与区域之前不连续）</li>
+<li>xz的坐标记录在高度场中，结构体本身没有记</li>
+</ul>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// Recast.h -&gt; struct rcSpan</span></span><br><span class="line"><span class="comment">// line: 276~282</span></span><br><span class="line"></span><br><span class="line"><span class="comment">/// Defines the number of bits allocated to rcSpan::smin and rcSpan::smax.</span></span><br><span class="line"><span class="keyword">static</span> <span class="keyword">const</span> <span class="keyword">int</span> RC_SPAN_HEIGHT_BITS = <span class="number">13</span>;</span><br><span class="line"></span><br><span class="line"><span class="comment">/// Represents a span in a heightfield.</span></span><br><span class="line"><span class="comment">/// @see rcHeightfield</span></span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">rcSpan</span></span></span><br><span class="line"><span class="class">&#123;</span></span><br><span class="line">	<span class="keyword">unsigned</span> <span class="keyword">int</span> smin : RC_SPAN_HEIGHT_BITS; <span class="comment">///&lt; The lower limit of the span. [Limit: &lt; #smax]</span></span><br><span class="line">	<span class="keyword">unsigned</span> <span class="keyword">int</span> smax : RC_SPAN_HEIGHT_BITS; <span class="comment">///&lt; The upper limit of the span. [Limit: &lt;= #RC_SPAN_MAX_HEIGHT]</span></span><br><span class="line">	<span class="keyword">unsigned</span> <span class="keyword">int</span> area : <span class="number">6</span>;                   <span class="comment">///&lt; The area id assigned to the span.</span></span><br><span class="line">	rcSpan* next;                            <span class="comment">///&lt; The next span higher up in column.</span></span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+
+<h2 id="高度场-heightfield"><a href="#高度场-heightfield" class="headerlink" title="高度场 heightfield"></a>高度场 heightfield</h2><ul>
+<li>容纳所有地图元素的空间容器</li>
+<li>高度场维护了一个二维数组来记录空间(特指span)集合，二维数组的单个元素是在xz平面投影相同的span的链表</li>
+</ul>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// Recast.h -&gt; struct rcHeightfield</span></span><br><span class="line"><span class="comment">// line: 294~313</span></span><br><span class="line"></span><br><span class="line"><span class="comment">/// A dynamic heightfield representing obstructed space.</span></span><br><span class="line"><span class="comment">/// @ingroup recast</span></span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">rcHeightfield</span></span></span><br><span class="line"><span class="class">&#123;</span></span><br><span class="line">	rcHeightfield();</span><br><span class="line">	~rcHeightfield();</span><br><span class="line"></span><br><span class="line">	<span class="keyword">int</span> width;			<span class="comment">///&lt; The width of the heightfield. (Along the x-axis in cell units.)</span></span><br><span class="line">	<span class="keyword">int</span> height;			<span class="comment">///&lt; The height of the heightfield. (Along the z-axis in cell units.)</span></span><br><span class="line">	<span class="keyword">float</span> bmin[<span class="number">3</span>];  	<span class="comment">///&lt; The minimum bounds in world space. [(x, y, z)]</span></span><br><span class="line">	<span class="keyword">float</span> bmax[<span class="number">3</span>];		<span class="comment">///&lt; The maximum bounds in world space. [(x, y, z)]</span></span><br><span class="line">	<span class="keyword">float</span> cs;			<span class="comment">///&lt; The size of each cell. (On the xz-plane.)</span></span><br><span class="line">	<span class="keyword">float</span> ch;			<span class="comment">///&lt; The height of each cell. (The minimum increment along the y-axis.)</span></span><br><span class="line">	rcSpan** spans;		<span class="comment">///&lt; Heightfield of spans (width*height).</span></span><br><span class="line">	rcSpanPool* pools;	<span class="comment">///&lt; Linked list of span pools.</span></span><br><span class="line">	rcSpan* freelist;	<span class="comment">///&lt; The next free span.</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">private</span>:</span><br><span class="line">	<span class="comment">// Explicitly-disabled copy constructor and copy assignment operator.</span></span><br><span class="line">	rcHeightfield(<span class="keyword">const</span> rcHeightfield&amp;);</span><br><span class="line">	rcHeightfield&amp; <span class="keyword">operator</span>=(<span class="keyword">const</span> rcHeightfield&amp;);</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+
+<h2 id="紧缩空间"><a href="#紧缩空间" class="headerlink" title="紧缩空间"></a>紧缩空间</h2><ul>
+<li>高度场中的span是三角面的体素集，是“实心”的部分</li>
+<li>紧缩空间是将实心区域之间的“空心”部分取出来</li>
+<li>y是起始高度，也是“实心”空间的可行走的上表面</li>
+<li>h是空心的连续高度</li>
+<li>con用一个uint来表示与4个邻居的联通情况（二进制位压缩表示）</li>
+</ul>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// Recast.h -&gt; struct rcCompactSpan</span></span><br><span class="line"><span class="comment">// line: 323~329</span></span><br><span class="line"></span><br><span class="line"><span class="comment">/// Represents a span of unobstructed space within a compact heightfield.</span></span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">rcCompactSpan</span></span></span><br><span class="line"><span class="class">&#123;</span></span><br><span class="line">	<span class="keyword">unsigned</span> <span class="keyword">short</span> y;			<span class="comment">///&lt; The lower extent of the span. (Measured from the heightfield's base.)</span></span><br><span class="line">	<span class="keyword">unsigned</span> <span class="keyword">short</span> reg;			<span class="comment">///&lt; The id of the region the span belongs to. (Or zero if not in a region.)</span></span><br><span class="line">	<span class="keyword">unsigned</span> <span class="keyword">int</span> con : <span class="number">24</span>;		<span class="comment">///&lt; Packed neighbor connection data.</span></span><br><span class="line">	<span class="keyword">unsigned</span> <span class="keyword">int</span> h : <span class="number">8</span>;			<span class="comment">///&lt; The height of the span.  (Measured from #y.)</span></span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+
+<p><img src="/images/posts/recast-1/compactSpan.png" alt="紧缩空间"></p>
+<h2 id="紧缩高度场"><a href="#紧缩高度场" class="headerlink" title="紧缩高度场"></a>紧缩高度场</h2><ul>
+<li>场景内的紧缩空间集合</li>
+</ul>
+<h3 id="rcCompactCell"><a href="#rcCompactCell" class="headerlink" title="rcCompactCell"></a>rcCompactCell</h3><ul>
+<li>这个结构记录了投影坐标为xz的这一列上CompactSpan的个数以及在数组中的起始id<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// Recast.h -&gt; struct rcCompactCell</span></span><br><span class="line"><span class="comment">// line: 316~320</span></span><br><span class="line"></span><br><span class="line"><span class="comment">/// Provides information on the content of a cell column in a compact heightfield.</span></span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">rcCompactCell</span></span></span><br><span class="line"><span class="class">&#123;</span></span><br><span class="line">	<span class="keyword">unsigned</span> <span class="keyword">int</span> index : <span class="number">24</span>;	<span class="comment">///&lt; Index to the first span in the column.</span></span><br><span class="line">	<span class="keyword">unsigned</span> <span class="keyword">int</span> count : <span class="number">8</span>;		<span class="comment">///&lt; Number of spans in the column.</span></span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+
+</li>
+</ul>
+<h3 id="rcCompactHeightfield"><a href="#rcCompactHeightfield" class="headerlink" title="rcCompactHeightfield"></a>rcCompactHeightfield</h3><ul>
+<li>rcCompactSpan* spans 是一个一维数组，按id递增的顺序记录了高度场内的所有CompactSpan<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// Recast.h -&gt; struct rcCompactHeightfield</span></span><br><span class="line"><span class="comment">// line: 333~353</span></span><br><span class="line"></span><br><span class="line"><span class="comment">/// A compact, static heightfield representing unobstructed space.</span></span><br><span class="line"><span class="comment">/// @ingroup recast</span></span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">rcCompactHeightfield</span></span></span><br><span class="line"><span class="class">&#123;</span></span><br><span class="line">	rcCompactHeightfield();</span><br><span class="line">	~rcCompactHeightfield();</span><br><span class="line">	<span class="keyword">int</span> width;					<span class="comment">///&lt; The width of the heightfield. (Along the x-axis in cell units.)</span></span><br><span class="line">	<span class="keyword">int</span> height;					<span class="comment">///&lt; The height of the heightfield. (Along the z-axis in cell units.)</span></span><br><span class="line">	<span class="keyword">int</span> spanCount;				<span class="comment">///&lt; The number of spans in the heightfield.</span></span><br><span class="line">	<span class="keyword">int</span> walkableHeight;			<span class="comment">///&lt; The walkable height used during the build of the field.  (See: rcConfig::walkableHeight)</span></span><br><span class="line">	<span class="keyword">int</span> walkableClimb;			<span class="comment">///&lt; The walkable climb used during the build of the field. (See: rcConfig::walkableClimb)</span></span><br><span class="line">	<span class="keyword">int</span> borderSize;				<span class="comment">///&lt; The AABB border size used during the build of the field. (See: rcConfig::borderSize)</span></span><br><span class="line">	<span class="keyword">unsigned</span> <span class="keyword">short</span> maxDistance;	<span class="comment">///&lt; The maximum distance value of any span within the field.</span></span><br><span class="line">	<span class="keyword">unsigned</span> <span class="keyword">short</span> maxRegions;	<span class="comment">///&lt; The maximum region id of any span within the field.</span></span><br><span class="line">	<span class="keyword">float</span> bmin[<span class="number">3</span>];				<span class="comment">///&lt; The minimum bounds in world space. [(x, y, z)]</span></span><br><span class="line">	<span class="keyword">float</span> bmax[<span class="number">3</span>];				<span class="comment">///&lt; The maximum bounds in world space. [(x, y, z)]</span></span><br><span class="line">	<span class="keyword">float</span> cs;					<span class="comment">///&lt; The size of each cell. (On the xz-plane.)</span></span><br><span class="line">	<span class="keyword">float</span> ch;					<span class="comment">///&lt; The height of each cell. (The minimum increment along the y-axis.)</span></span><br><span class="line">	rcCompactCell* cells;		<span class="comment">///&lt; Array of cells. [Size: #width*#height]</span></span><br><span class="line">	rcCompactSpan* spans;		<span class="comment">///&lt; Array of spans. [Size: #spanCount]</span></span><br><span class="line">	<span class="keyword">unsigned</span> <span class="keyword">short</span>* dist;		<span class="comment">///&lt; Array containing border distance data. [Size: #spanCount]</span></span><br><span class="line">	<span class="keyword">unsigned</span> <span class="keyword">char</span>* areas;		<span class="comment">///&lt; Array containing area id data. [Size: #spanCount]</span></span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+
+</li>
+</ul>
+<h2 id="BVH-Bounding-volume-hierarchy"><a href="#BVH-Bounding-volume-hierarchy" class="headerlink" title="BVH(Bounding volume hierarchy)"></a>BVH(Bounding volume hierarchy)</h2><ul>
+<li>包围体层次结构，是一种用树形结构组织管理空间内物体（几何体）的方法，在项目的代码注释中也被称为AABB Tree。</li>
+</ul>
+<h2 id="分水岭算法"><a href="#分水岭算法" class="headerlink" title="分水岭算法"></a>分水岭算法</h2><ul>
+<li>分水岭算法是一种图像区域分割法，在分割的过程中，它会把跟临近像素间的相似性作为重要的参考依据，从而将在空间位置上相近并且灰度值相近的像素点互相连接起来构成一个封闭的轮廓</li>
+<li>分水岭算法的目标就是找出不同区域之间的分水线，其过程就是让水位不断上升满满淹没汇水盆地，同时构建水坝阻挡不同的盆地交汇。这些水坝就是最终连接好的单像素边缘</li>
+</ul>
+<h2 id="生成navmesh时面板上输入的参数"><a href="#生成navmesh时面板上输入的参数" class="headerlink" title="生成navmesh时面板上输入的参数"></a>生成navmesh时面板上输入的参数</h2><ul>
+<li>所有的参数都对应在下面的 struct 中<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// Recast.h -&gt; struct rcCompactHeightfield</span></span><br><span class="line"><span class="comment">// line: 196~263</span></span><br><span class="line"></span><br><span class="line"><span class="comment">/// Specifies a configuration to use when performing Recast builds.</span></span><br><span class="line"><span class="comment">/// @ingroup recast</span></span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">rcConfig</span></span></span><br><span class="line"><span class="class">&#123;</span></span><br><span class="line">	<span class="comment">/// The width of the field along the x-axis. [Limit: &gt;= 0] [Units: vx]</span></span><br><span class="line">	<span class="keyword">int</span> width;</span><br><span class="line"></span><br><span class="line">	<span class="comment">/// The height of the field along the z-axis. [Limit: &gt;= 0] [Units: vx]</span></span><br><span class="line">	<span class="keyword">int</span> height;</span><br><span class="line"></span><br><span class="line">	<span class="comment">/// The width/height size of tile's on the xz-plane. [Limit: &gt;= 0] [Units: vx]</span></span><br><span class="line">	<span class="keyword">int</span> tileSize;</span><br><span class="line"></span><br><span class="line">	<span class="comment">/// The size of the non-navigable border around the heightfield. [Limit: &gt;=0] [Units: vx]</span></span><br><span class="line">	<span class="keyword">int</span> borderSize;</span><br><span class="line"></span><br><span class="line">	<span class="comment">/// The xz-plane cell size to use for fields. [Limit: &gt; 0] [Units: wu]</span></span><br><span class="line">	<span class="keyword">float</span> cs;</span><br><span class="line"></span><br><span class="line">	<span class="comment">/// The y-axis cell size to use for fields. [Limit: &gt; 0] [Units: wu]</span></span><br><span class="line">	<span class="keyword">float</span> ch;</span><br><span class="line"></span><br><span class="line">	<span class="comment">/// The minimum bounds of the field's AABB. [(x, y, z)] [Units: wu]</span></span><br><span class="line">	<span class="keyword">float</span> bmin[<span class="number">3</span>];</span><br><span class="line"></span><br><span class="line">	<span class="comment">/// The maximum bounds of the field's AABB. [(x, y, z)] [Units: wu]</span></span><br><span class="line">	<span class="keyword">float</span> bmax[<span class="number">3</span>];</span><br><span class="line"></span><br><span class="line">	<span class="comment">/// The maximum slope that is considered walkable. [Limits: 0 &lt;= value &lt; 90] [Units: Degrees]</span></span><br><span class="line">	<span class="keyword">float</span> walkableSlopeAngle;</span><br><span class="line"></span><br><span class="line">	<span class="comment">/// Minimum floor to 'ceiling' height that will still allow the floor area to</span></span><br><span class="line">	<span class="comment">/// be considered walkable. [Limit: &gt;= 3] [Units: vx]</span></span><br><span class="line">	<span class="keyword">int</span> walkableHeight;</span><br><span class="line"></span><br><span class="line">	<span class="comment">/// Maximum ledge height that is considered to still be traversable. [Limit: &gt;=0] [Units: vx]</span></span><br><span class="line">	<span class="keyword">int</span> walkableClimb;</span><br><span class="line"></span><br><span class="line">	<span class="comment">/// The distance to erode/shrink the walkable area of the heightfield away from</span></span><br><span class="line">	<span class="comment">/// obstructions.  [Limit: &gt;=0] [Units: vx]</span></span><br><span class="line">	<span class="keyword">int</span> walkableRadius;</span><br><span class="line"></span><br><span class="line">	<span class="comment">/// The maximum allowed length for contour edges along the border of the mesh. [Limit: &gt;=0] [Units: vx]</span></span><br><span class="line">	<span class="keyword">int</span> maxEdgeLen;</span><br><span class="line"></span><br><span class="line">	<span class="comment">/// The maximum distance a simplfied contour's border edges should deviate</span></span><br><span class="line">	<span class="comment">/// the original raw contour. [Limit: &gt;=0] [Units: vx]</span></span><br><span class="line">	<span class="keyword">float</span> maxSimplificationError;</span><br><span class="line"></span><br><span class="line">	<span class="comment">/// The minimum number of cells allowed to form isolated island areas. [Limit: &gt;=0] [Units: vx]</span></span><br><span class="line">	<span class="keyword">int</span> minRegionArea;</span><br><span class="line"></span><br><span class="line">	<span class="comment">/// Any regions with a span count smaller than this value will, if possible,</span></span><br><span class="line">	<span class="comment">/// be merged with larger regions. [Limit: &gt;=0] [Units: vx]</span></span><br><span class="line">	<span class="keyword">int</span> mergeRegionArea;</span><br><span class="line"></span><br><span class="line">	<span class="comment">/// The maximum number of vertices allowed for polygons generated during the</span></span><br><span class="line">	<span class="comment">/// contour to polygon conversion process. [Limit: &gt;= 3]</span></span><br><span class="line">	<span class="keyword">int</span> maxVertsPerPoly;</span><br><span class="line"></span><br><span class="line">	<span class="comment">/// Sets the sampling distance to use when generating the detail mesh.</span></span><br><span class="line">	<span class="comment">/// (For height detail only.) [Limits: 0 or &gt;= 0.9] [Units: wu]</span></span><br><span class="line">	<span class="keyword">float</span> detailSampleDist;</span><br><span class="line"></span><br><span class="line">	<span class="comment">/// The maximum distance the detail mesh surface should deviate from heightfield</span></span><br><span class="line">	<span class="comment">/// data. (For height detail only.) [Limit: &gt;=0] [Units: wu]</span></span><br><span class="line">	<span class="keyword">float</span> detailSampleMaxError;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+
+</li>
+</ul>
+<hr>
+<h1 id="生成导航网格"><a href="#生成导航网格" class="headerlink" title="生成导航网格"></a>生成导航网格</h1><ul>
+<li>Recast部分的功能就是生成整个导航网格，其核心方法是 Sample_SoloMesh::handleBuild</li>
+<li><code>class Sample_SoloMesh</code> 是 头文件Sample.h 中的 class Sample 的实现<br>这个函数注释非常友好地揭露了生成整个NavMesh导航网格的8个步骤，分别是：<ul>
+<li>Step 1. Initialize build config</li>
+<li>Step 2. Rasterize input polygon soup</li>
+<li>Step 3. Filter walkables surfaces</li>
+<li>Step 4. Partition walkable surface to simple regions</li>
+<li>Step 5. Trace and simplify region contours</li>
+<li>Step 6. Build polygons mesh from contours</li>
+<li>Step 7. Create detail mesh which allows to access approximate height on each polygon</li>
+<li>Step 8. Create Detour data from Recast poly mesh</li>
+</ul>
+</li>
+</ul>
+<h2 id="读入数据"><a href="#读入数据" class="headerlink" title="读入数据"></a>读入数据</h2><ul>
+<li>构建方式选择，一共三种<br><img src="/images/posts/recast-1/build_type.png" alt="AABB"></li>
+</ul>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// RecastDemo/main.cpp</span></span><br><span class="line"><span class="comment">// line:60~70</span></span><br><span class="line"></span><br><span class="line"><span class="function">Sample* <span class="title">createSolo</span><span class="params">()</span> </span>&#123; <span class="keyword">return</span> <span class="keyword">new</span> Sample_SoloMesh(); &#125;</span><br><span class="line"><span class="function">Sample* <span class="title">createTile</span><span class="params">()</span> </span>&#123; <span class="keyword">return</span> <span class="keyword">new</span> Sample_TileMesh(); &#125;</span><br><span class="line"><span class="function">Sample* <span class="title">createTempObstacle</span><span class="params">()</span> </span>&#123; <span class="keyword">return</span> <span class="keyword">new</span> Sample_TempObstacles(); &#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">static</span> SampleItem g_samples[] =</span><br><span class="line">&#123;</span><br><span class="line">	&#123; createSolo, <span class="string">"Solo Mesh"</span> &#125;,</span><br><span class="line">	&#123; createTile, <span class="string">"Tile Mesh"</span> &#125;,</span><br><span class="line">	&#123; createTempObstacle, <span class="string">"Temp Obstacles"</span> &#125;,</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="keyword">static</span> <span class="keyword">const</span> <span class="keyword">int</span> g_nsamples = <span class="keyword">sizeof</span>(g_samples) / <span class="keyword">sizeof</span>(SampleItem);</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li><p>recastDemo编辑器使用SDL来做编辑器</p>
+</li>
+<li><p>其创建[Choose Sample]GUI列表和对应的选择响应函数在RecastDemo/main.cpp line:611~666</p>
+<figure class="highlight cpp"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// RecastDemo/main.cpp</span></span><br><span class="line"><span class="comment">// line:611~666</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> (showSample)</span><br><span class="line">&#123;</span><br><span class="line">    <span class="comment">// 显示choose sample列表</span></span><br><span class="line">    <span class="keyword">static</span> <span class="keyword">int</span> levelScroll = <span class="number">0</span>;</span><br><span class="line">    <span class="keyword">if</span> (imguiBeginScrollArea(<span class="string">"Choose Sample"</span>, width<span class="number">-10</span><span class="number">-250</span><span class="number">-10</span><span class="number">-200</span>, height<span class="number">-10</span><span class="number">-250</span>, <span class="number">200</span>, <span class="number">250</span>, &amp;levelScroll))</span><br><span class="line">        mouseOverMenu = <span class="literal">true</span>;</span><br><span class="line"></span><br><span class="line">    Sample* newSample = <span class="number">0</span>;</span><br><span class="line">    <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; g_nsamples; ++i)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">if</span> (imguiItem(g_samples[i].name.c_str()))</span><br><span class="line">        &#123;</span><br><span class="line">            newSample = g_samples[i].create(); <span class="comment">// 这里是点击选中响应代码，会创建对应的Sample，在上下文中是Sample_SoloMesh</span></span><br><span class="line">            <span class="keyword">if</span> (newSample)</span><br><span class="line">                sampleName = g_samples[i].name;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">if</span> (newSample)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="keyword">delete</span> sample;</span><br><span class="line">        sample = newSample;</span><br><span class="line">        sample-&gt;setContext(&amp;ctx); <span class="comment">// m_ctx = ctx，ctx是个全局上下文环境，主要用于计时、Log等。</span></span><br><span class="line">        <span class="keyword">if</span> (geom) <span class="comment">// geom是模型数据，在选择模型之后切换Sample方式才会进入这里</span></span><br><span class="line">        &#123;</span><br><span class="line">            sample-&gt;handleMeshChanged(geom);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (geom || sample)</span><br><span class="line">    &#123;</span><br><span class="line">        <span class="comment">//...做一些编辑器的更新工作</span></span><br><span class="line">        <span class="comment">//...计算相机位置，由于这个函数循环在跑，所以如果showSample是True的时候相机会被无限拉回，感觉条件改为newSample更合理一点？</span></span><br><span class="line">        <span class="comment">//...设置GL_FOG_START和GL_FOG_END</span></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    imguiEndScrollArea();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>接着再点击界面的[Choose Mesh]，选择一个.obj文件<br><img src="/images/posts/recast-1/choose_obj.png" alt=""><br><img src="/images/posts/recast-1/obj.png" alt=""></p>
+</li>
+<li><p>由v/vt/f/vn等key开头，后面跟相应的数据，以空格分开</p>
+</li>
+<li><p>其中v表示顶点，f表示面，即顶点索引</p>
+</li>
+</ul>
+
+      
+    </div>
+    <div class="article-footer">
+      <blockquote class="mt-2x">
+  <ul class="post-copyright list-unstyled">
+    
+    <li class="post-copyright-link hidden-xs">
+      <strong>本文链接：</strong>
+      <a href="https://overtalk.site/2021/02/02/recast-1/" title="导航网格-基础概念&amp;数据结构" target="_blank" rel="external">https://overtalk.site/2021/02/02/recast-1/</a>
+    </li>
+    
+    <li class="post-copyright-license">
+      <strong>版权声明： </strong> 本博客所有文章除特别声明外，均采用 <a href="http://creativecommons.org/licenses/by/4.0/deed.zh" target="_blank" rel="external">CC BY 4.0 CN协议</a> 许可协议。转载请注明出处！
+    </li>
+  </ul>
+</blockquote>
+
+
+<div class="panel panel-default panel-badger">
+  <div class="panel-body">
+    <figure class="media">
+      <div class="media-left">
+        <a href="https://github.com/overtalk" target="_blank" class="img-burn thumb-sm visible-lg">
+          <img src="/images/avatar.png" class="img-rounded w-full" alt="">
+        </a>
+      </div>
+      <div class="media-body">
+        <h3 class="media-heading"><a href="https://github.com/overtalk" target="_blank"><span class="text-dark">QinHan</span><small class="ml-1x">Game Developer &amp; Designer</small></a></h3>
+        <div>当你发现自己的才华撑不起野心时，就请安静下来学习吧！</div>
+      </div>
+    </figure>
+  </div>
+</div>
+
+
+    </div>
+  </article>
+  
+    
+  <section id="comments">
+  	
+           
+    
+  </section>
+
+
+  
+</div>
+
+  <nav class="bar bar-footer clearfix" data-stick-bottom>
+  <div class="bar-inner">
+  
+  <ul class="pager pull-left">
+    
+    <li class="prev">
+      <a href="/2022/07/19/bitmap/" title="bitmap"><i class="icon icon-angle-left" aria-hidden="true"></i><span>&nbsp;&nbsp;上一篇</span></a>
+    </li>
+    
+    
+    <li class="next">
+      <a href="/2021/01/19/mongo-metas/" title="mongo 杂记"><span>下一篇&nbsp;&nbsp;</span><i class="icon icon-angle-right" aria-hidden="true"></i></a>
+    </li>
+    
+    
+  </ul>
+  
+  
+  <!-- Button trigger modal -->
+  <button type="button" class="btn btn-fancy btn-donate pop-onhover bg-gradient-warning" data-toggle="modal" data-target="#donateModal"><span>赏</span></button>
+  <!-- <div class="wave-icon wave-icon-danger btn-donate" data-toggle="modal" data-target="#donateModal">
+    <div class="wave-circle"><span class="icon"><i class="icon icon-bill"></i></span></div>
+  </div> -->
+  
+  
+  <div class="bar-right">
+    
+    <div class="share-component" data-sites="weibo,qq,wechat,facebook,twitter" data-mobile-sites="weibo,qq,qzone"></div>
+    
+  </div>
+  </div>
+</nav>
+  
+<!-- Modal -->
+<div class="modal modal-center modal-small modal-xs-full fade" id="donateModal" tabindex="-1" role="dialog">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content donate">
+      <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+      <div class="modal-body">
+        <div class="donate-box">
+          <div class="donate-head">
+            <p>感谢您的支持，我会继续努力的!</p>
+          </div>
+          <div class="tab-content">
+            <div role="tabpanel" class="tab-pane fade active in" id="alipay">
+              <div class="donate-payimg">
+                <img src="/images/donate/alipayimg.png" alt="扫码支持" title="扫一扫" />
+              </div>
+              <p class="text-muted mv">喜欢就收藏，疼爱就打赏！</p>
+              <p class="text-grey">支付宝扫一扫</p>
+            </div>
+            <div role="tabpanel" class="tab-pane fade" id="wechatpay">
+              <div class="donate-payimg">
+                <img src="/images/donate/wechatpayimg.png" alt="扫码支持" title="扫一扫" />
+              </div>
+              <p class="text-muted mv">喜欢就收藏，疼爱就打赏！</p>
+              <p class="text-grey">微信扫一扫</p>
+            </div>
+          </div>
+          <div class="donate-footer">
+            <ul class="nav nav-tabs nav-justified" role="tablist">
+              <li role="presentation" class="active">
+                <a href="#alipay" id="alipay-tab" role="tab" data-toggle="tab" aria-controls="alipay" aria-expanded="true"><i class="icon icon-alipay"></i> 支付宝</a>
+              </li>
+              <li role="presentation" class="">
+                <a href="#wechatpay" role="tab" id="wechatpay-tab" data-toggle="tab" aria-controls="wechatpay" aria-expanded="false"><i class="icon icon-wepay"></i> 微信支付</a>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+
+</main>
+
+  <footer class="footer" itemscope itemtype="http://schema.org/WPFooter">
+	
+	
+    <ul class="social-links">
+    	
+        <li><a href="https://github.com/overtalk" target="_blank" title="Github" data-toggle=tooltip data-placement=top><i class="icon icon-github"></i></a></li>
+        
+        <li><a href="/atom.xml" target="_blank" title="Rss" data-toggle=tooltip data-placement=top><i class="icon icon-rss"></i></a></li>
+        
+    </ul>
+
+    <div class="copyright">
+    	
+        <div class="publishby">
+        	Powered by <a href="https://hexo.io/" target="_blank"> Hexo </a>base on <a href="https://github.com/cofess/hexo-theme-pure" target="_blank">pure</a>.
+        </div>
+    </div>
+</footer>
+  <script src="//cdn.jsdelivr.net/npm/jquery@1.12.4/dist/jquery.min.js"></script>
+<script>
+window.jQuery || document.write('<script src="js/jquery.min.js"><\/script>')
+</script>
+<script src="/js/plugin.min.js"></script>
+<script src="/js/application.js"></script>
+
+    <script>
+(function (window) {
+    var INSIGHT_CONFIG = {
+        TRANSLATION: {
+            POSTS: '文章',
+            PAGES: '页面',
+            CATEGORIES: '分类',
+            TAGS: '标签',
+            UNTITLED: '(未命名)',
+        },
+        ROOT_URL: '/',
+        CONTENT_URL: '/content.json',
+    };
+    window.INSIGHT_CONFIG = INSIGHT_CONFIG;
+})(window);
+</script>
+<script src="/js/insight.js"></script>
+
+
+
+
+
+   
+<script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+
+
+
+   
+    
+  <!-- <link rel="stylesheet" href="https://unpkg.com/gitalk/dist/gitalk.css"> -->
+  <script src="//cdn.jsdelivr.net/npm/gitalk@1.4.0/dist/gitalk.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/blueimp-md5@2.10.0/js/md5.min.js"></script>
+  <script type="text/javascript">
+  var gitalk = new Gitalk({
+    clientID: '8b37930d2d91b16067d3',
+    clientSecret: '3e1cf0374a8d938b6e1d1c8239ff068ac5de5c96',
+    repo: 'overtalk.github.io',
+    owner: 'overtalk',
+    admin: ['overtalk'],
+    id: md5(location.pathname),
+    distractionFreeMode: true
+  })
+  gitalk.render('comments')
+  </script>
+
+      
+
+
+
+
+
+
+
+</body>
+</html>

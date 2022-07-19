@@ -1,0 +1,909 @@
+<!DOCTYPE html>
+<html lang=zh>
+<head>
+  <meta charset="utf-8">
+  
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no, minimal-ui">
+  <meta name="renderer" content="webkit">
+  <meta http-equiv="Cache-Control" content="no-transform" />
+  <meta http-equiv="Cache-Control" content="no-siteapp" />
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <meta name="format-detection" content="telephone=no,email=no,adress=no">
+  <!-- Color theme for statusbar -->
+  <meta name="theme-color" content="#000000" />
+  <!-- 强制页面在当前窗口以独立页面显示,防止别人在框架里调用页面 -->
+  <meta http-equiv="window-target" content="_top" />
+  
+  
+  <title>Go - 内存对齐 | Overtalk</title>
+  <meta name="description" content="原文地址  问题1234567type Part1 struct &amp;#123;	a bool	b int32	c int8	d int64	e byte&amp;#125;  在开始之前，希望你计算一下 Part1 共占用的大小是多少呢？  12345678func main() &amp;#123;	fmt.Printf(&quot;bool size: %d\n&quot;, unsafe.Sizeof(bool(true))">
+<meta name="keywords" content="Golang">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Go - 内存对齐">
+<meta property="og:url" content="https:&#x2F;&#x2F;overtalk.site&#x2F;2019&#x2F;11&#x2F;27&#x2F;go-memory-alignment&#x2F;index.html">
+<meta property="og:site_name" content="QinHan&#39;s Site">
+<meta property="og:description" content="原文地址  问题1234567type Part1 struct &amp;#123;	a bool	b int32	c int8	d int64	e byte&amp;#125;  在开始之前，希望你计算一下 Part1 共占用的大小是多少呢？  12345678func main() &amp;#123;	fmt.Printf(&quot;bool size: %d\n&quot;, unsafe.Sizeof(bool(true))">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:image" content="https:&#x2F;&#x2F;overtalk.site&#x2F;images&#x2F;posts&#x2F;go-memory-alignment&#x2F;1.png">
+<meta property="og:image" content="https:&#x2F;&#x2F;overtalk.site&#x2F;images&#x2F;posts&#x2F;go-memory-alignment&#x2F;2.png">
+<meta property="og:image" content="https:&#x2F;&#x2F;overtalk.site&#x2F;images&#x2F;posts&#x2F;go-memory-alignment&#x2F;3.png">
+<meta property="og:updated_time" content="2022-07-19T07:53:37.893Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https:&#x2F;&#x2F;overtalk.site&#x2F;images&#x2F;posts&#x2F;go-memory-alignment&#x2F;1.png">
+  <!-- Canonical links -->
+  <link rel="canonical" href="https://overtalk.site/2019/11/27/go-memory-alignment/index.html">
+  
+    <link rel="alternate" href="/atom.xml" title="QinHan&#39;s Site" type="application/atom+xml">
+  
+  
+    <link rel="icon" href="/favicon.png" type="image/x-icon">
+  
+  <link rel="stylesheet" href="/css/style.css">
+  
+  
+  
+  
+    <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/gitalk@1.4.0/dist/gitalk.min.css">
+  
+</head>
+
+
+<body class="main-center theme-black" itemscope itemtype="http://schema.org/WebPage">
+  <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+  <div class="slimContent">
+    <div class="navbar-header">
+      
+      
+      <div class="profile-block text-center">
+        <a id="avatar" href="https://github.com/overtalk" target="_blank">
+          <img class="img-circle img-rotate" src="/images/avatar.png" width="200" height="200">
+        </a>
+        <h2 id="name" class="hidden-xs hidden-sm">QinHan</h2>
+        <h3 id="title" class="hidden-xs hidden-sm hidden-md">Game Developer &amp; Designer</h3>
+        <small id="location" class="text-muted hidden-xs hidden-sm"><i class="icon icon-map-marker"></i> Shanghai, China</small>
+      </div>
+      
+      <div class="search" id="search-form-wrap">
+
+    <form class="search-form sidebar-form">
+        <div class="input-group">
+            <input type="text" class="search-form-input form-control" placeholder="搜索" />
+            <span class="input-group-btn">
+                <button type="submit" class="search-form-submit btn btn-flat" onclick="return false;"><i class="icon icon-search"></i></button>
+            </span>
+        </div>
+    </form>
+    <div class="ins-search">
+  <div class="ins-search-mask"></div>
+  <div class="ins-search-container">
+    <div class="ins-input-wrapper">
+      <input type="text" class="ins-search-input" placeholder="想要查找什么..." x-webkit-speech />
+      <button type="button" class="close ins-close ins-selectable" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button>
+    </div>
+    <div class="ins-section-wrapper">
+      <div class="ins-section-container"></div>
+    </div>
+  </div>
+</div>
+
+
+</div>
+      <button class="navbar-toggle collapsed" type="button" data-toggle="collapse" data-target="#main-navbar" aria-controls="main-navbar" aria-expanded="false">
+        <span class="sr-only">Toggle navigation</span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+    </div>
+    <nav id="main-navbar" class="collapse navbar-collapse" itemscope itemtype="http://schema.org/SiteNavigationElement" role="navigation">
+      <ul class="nav navbar-nav main-nav menu-highlight">
+        
+        
+        <li class="menu-item menu-item-home">
+          <a href="/.">
+            
+            <i class="icon icon-home-fill"></i>
+            
+            <span class="menu-title">首页</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives">
+            
+            <i class="icon icon-archives-fill"></i>
+            
+            <span class="menu-title">归档</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories">
+            
+            <i class="icon icon-folder"></i>
+            
+            <span class="menu-title">分类</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags">
+            
+            <i class="icon icon-tags"></i>
+            
+            <span class="menu-title">标签</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-repository">
+          <a href="/repository">
+            
+            <i class="icon icon-project"></i>
+            
+            <span class="menu-title">项目</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-links">
+          <a href="/links">
+            
+            <i class="icon icon-friendship"></i>
+            
+            <span class="menu-title">友链</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about">
+            
+            <i class="icon icon-cup-fill"></i>
+            
+            <span class="menu-title">关于</span>
+          </a>
+        </li>
+        
+      </ul>
+      
+	
+    <ul class="social-links">
+    	
+        <li><a href="https://github.com/overtalk" target="_blank" title="Github" data-toggle=tooltip data-placement=top><i class="icon icon-github"></i></a></li>
+        
+        <li><a href="/atom.xml" target="_blank" title="Rss" data-toggle=tooltip data-placement=top><i class="icon icon-rss"></i></a></li>
+        
+    </ul>
+
+    </nav>
+  </div>
+</header>
+
+  
+    <aside class="sidebar" itemscope itemtype="http://schema.org/WPSideBar">
+  <div class="slimContent">
+    
+      <div class="widget">
+    <h3 class="widget-title">公告</h3>
+    <div class="widget-body">
+        <div id="board">
+            <div class="content">
+                <p>欢迎交流与分享经验!</p><p>邮箱：qinhan_shu@163.com</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">分类</h3>
+    <div class="widget-body">
+      <ul class="category-list"><li class="category-list-item"><a class="category-list-link" href="/categories/fragment/">fragment</a><span class="category-list-count">3</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/interview/">interview</a><span class="category-list-count">4</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/jewellery/">jewellery</a><span class="category-list-count">4</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/linux/">linux</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/minio/">minio</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/mongo/">mongo</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/rtc/">rtc</a><span class="category-list-count">3</span><ul class="category-list-child"><li class="category-list-item"><a class="category-list-link" href="/categories/rtc/book/">book</a><span class="category-list-count">1</span><ul class="category-list-child"><li class="category-list-item"><a class="category-list-link" href="/categories/rtc/book/freeswitch/">freeswitch</a><span class="category-list-count">1</span></li></ul></li></ul></li><li class="category-list-item"><a class="category-list-link" href="/categories/%E7%BC%96%E7%A8%8B/">编程</a><span class="category-list-count">141</span><ul class="category-list-child"><li class="category-list-item"><a class="category-list-link" href="/categories/%E7%BC%96%E7%A8%8B/%E6%B8%B8%E6%88%8F/">游戏</a><span class="category-list-count">1</span></li></ul></li><li class="category-list-item"><a class="category-list-link" href="/categories/%E9%9A%8F%E7%AC%94/">随笔</a><span class="category-list-count">2</span></li></ul>
+    </div>
+  </div>
+
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">标签</h3>
+    <div class="widget-body">
+      <ul class="tag-list" itemprop="keywords"><li class="tag-list-item"><a class="tag-list-link" href="/tags/CI-CD/" rel="tag">CI/CD</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Docker/" rel="tag">Docker</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Golang/" rel="tag">Golang</a><span class="tag-list-count">35</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Nagle/" rel="tag">Nagle</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Network/" rel="tag">Network</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Redis/" rel="tag">Redis</a><span class="tag-list-count">6</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Redis%E5%A4%87%E4%BB%BD/" rel="tag">Redis备份</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Shadowsocks/" rel="tag">Shadowsocks</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Socks5/" rel="tag">Socks5</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/algorithm/" rel="tag">algorithm</a><span class="tag-list-count">8</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/clion/" rel="tag">clion</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/cpp/" rel="tag">cpp</a><span class="tag-list-count">50</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/docker/" rel="tag">docker</a><span class="tag-list-count">3</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/dw/" rel="tag">dw</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/endian/" rel="tag">endian</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/epoll/" rel="tag">epoll</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/freeswitch/" rel="tag">freeswitch</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/git/" rel="tag">git</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/gpg/" rel="tag">gpg</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/interview/" rel="tag">interview</a><span class="tag-list-count">4</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/io/" rel="tag">io</a><span class="tag-list-count">3</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/ip/" rel="tag">ip</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/iptables/" rel="tag">iptables</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/k8s/" rel="tag">k8s</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/kernal/" rel="tag">kernal</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/linux/" rel="tag">linux</a><span class="tag-list-count">8</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/loadbalance/" rel="tag">loadbalance</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/lock-free/" rel="tag">lock-free</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/lua/" rel="tag">lua</a><span class="tag-list-count">9</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/mac/" rel="tag">mac</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/mongo/" rel="tag">mongo</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/mysql/" rel="tag">mysql</a><span class="tag-list-count">3</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/network/" rel="tag">network</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/python/" rel="tag">python</a><span class="tag-list-count">3</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/recastnavigation/" rel="tag">recastnavigation</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/regex/" rel="tag">regex</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/rtc/" rel="tag">rtc</a><span class="tag-list-count">3</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/service-mesh/" rel="tag">service mesh</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/shadowsocks/" rel="tag">shadowsocks</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/shell/" rel="tag">shell</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/ssh/" rel="tag">ssh</a><span class="tag-list-count">3</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/systemcall/" rel="tag">systemcall</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/systemd/" rel="tag">systemd</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/tcp/" rel="tag">tcp</a><span class="tag-list-count">6</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E4%B8%AA%E4%BA%BA%E7%BD%91%E7%9B%98/" rel="tag">个人网盘</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%B9%B6%E5%8F%91/" rel="tag">并发</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E6%B8%B8%E6%88%8F/" rel="tag">游戏</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E9%9A%8F%E7%AC%94/" rel="tag">随笔</a><span class="tag-list-count">2</span></li></ul>
+    </div>
+  </div>
+
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">标签云</h3>
+    <div class="widget-body tagcloud">
+      <a href="/tags/CI-CD/" style="font-size: 13px;">CI/CD</a> <a href="/tags/Docker/" style="font-size: 13px;">Docker</a> <a href="/tags/Golang/" style="font-size: 13.88px;">Golang</a> <a href="/tags/Nagle/" style="font-size: 13px;">Nagle</a> <a href="/tags/Network/" style="font-size: 13px;">Network</a> <a href="/tags/Redis/" style="font-size: 13.5px;">Redis</a> <a href="/tags/Redis%E5%A4%87%E4%BB%BD/" style="font-size: 13px;">Redis备份</a> <a href="/tags/Shadowsocks/" style="font-size: 13px;">Shadowsocks</a> <a href="/tags/Socks5/" style="font-size: 13px;">Socks5</a> <a href="/tags/algorithm/" style="font-size: 13.63px;">algorithm</a> <a href="/tags/clion/" style="font-size: 13px;">clion</a> <a href="/tags/cpp/" style="font-size: 14px;">cpp</a> <a href="/tags/docker/" style="font-size: 13.25px;">docker</a> <a href="/tags/dw/" style="font-size: 13px;">dw</a> <a href="/tags/endian/" style="font-size: 13px;">endian</a> <a href="/tags/epoll/" style="font-size: 13px;">epoll</a> <a href="/tags/freeswitch/" style="font-size: 13px;">freeswitch</a> <a href="/tags/git/" style="font-size: 13px;">git</a> <a href="/tags/gpg/" style="font-size: 13px;">gpg</a> <a href="/tags/interview/" style="font-size: 13.38px;">interview</a> <a href="/tags/io/" style="font-size: 13.25px;">io</a> <a href="/tags/ip/" style="font-size: 13.13px;">ip</a> <a href="/tags/iptables/" style="font-size: 13px;">iptables</a> <a href="/tags/k8s/" style="font-size: 13px;">k8s</a> <a href="/tags/kernal/" style="font-size: 13px;">kernal</a> <a href="/tags/linux/" style="font-size: 13.63px;">linux</a> <a href="/tags/loadbalance/" style="font-size: 13.13px;">loadbalance</a> <a href="/tags/lock-free/" style="font-size: 13px;">lock-free</a> <a href="/tags/lua/" style="font-size: 13.75px;">lua</a> <a href="/tags/mac/" style="font-size: 13.13px;">mac</a> <a href="/tags/mongo/" style="font-size: 13px;">mongo</a> <a href="/tags/mysql/" style="font-size: 13.25px;">mysql</a> <a href="/tags/network/" style="font-size: 13px;">network</a> <a href="/tags/python/" style="font-size: 13.25px;">python</a> <a href="/tags/recastnavigation/" style="font-size: 13px;">recastnavigation</a> <a href="/tags/regex/" style="font-size: 13px;">regex</a> <a href="/tags/rtc/" style="font-size: 13.25px;">rtc</a> <a href="/tags/service-mesh/" style="font-size: 13px;">service mesh</a> <a href="/tags/shadowsocks/" style="font-size: 13px;">shadowsocks</a> <a href="/tags/shell/" style="font-size: 13.13px;">shell</a> <a href="/tags/ssh/" style="font-size: 13.25px;">ssh</a> <a href="/tags/systemcall/" style="font-size: 13.13px;">systemcall</a> <a href="/tags/systemd/" style="font-size: 13px;">systemd</a> <a href="/tags/tcp/" style="font-size: 13.5px;">tcp</a> <a href="/tags/%E4%B8%AA%E4%BA%BA%E7%BD%91%E7%9B%98/" style="font-size: 13px;">个人网盘</a> <a href="/tags/%E5%B9%B6%E5%8F%91/" style="font-size: 13px;">并发</a> <a href="/tags/%E6%B8%B8%E6%88%8F/" style="font-size: 13px;">游戏</a> <a href="/tags/%E9%9A%8F%E7%AC%94/" style="font-size: 13.13px;">随笔</a>
+    </div>
+  </div>
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">归档</h3>
+    <div class="widget-body">
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2022/07/">七月 2022</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/02/">二月 2021</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/01/">一月 2021</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2020/11/">十一月 2020</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2020/10/">十月 2020</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2020/08/">八月 2020</a><span class="archive-list-count">2</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2020/07/">七月 2020</a><span class="archive-list-count">15</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2020/06/">六月 2020</a><span class="archive-list-count">3</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2020/05/">五月 2020</a><span class="archive-list-count">6</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2020/04/">四月 2020</a><span class="archive-list-count">14</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2020/03/">三月 2020</a><span class="archive-list-count">16</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2020/02/">二月 2020</a><span class="archive-list-count">15</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2020/01/">一月 2020</a><span class="archive-list-count">13</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2019/12/">十二月 2019</a><span class="archive-list-count">20</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2019/11/">十一月 2019</a><span class="archive-list-count">6</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2019/10/">十月 2019</a><span class="archive-list-count">25</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2019/09/">九月 2019</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2019/08/">八月 2019</a><span class="archive-list-count">2</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2019/07/">七月 2019</a><span class="archive-list-count">9</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2019/04/">四月 2019</a><span class="archive-list-count">2</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2019/03/">三月 2019</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2018/11/">十一月 2018</a><span class="archive-list-count">9</span></li></ul>
+    </div>
+  </div>
+
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">最新文章</h3>
+    <div class="widget-body">
+      <ul class="recent-post-list list-unstyled no-thumbnail">
+        
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                
+              </p>
+              <p class="item-title">
+                <a href="/2022/07/19/bitmap/" class="title">bitmap</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2022-07-19T15:47:57.000Z" itemprop="datePublished">2022-07-19</time>
+              </p>
+            </div>
+          </li>
+          
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                <a class="category-link" href="/categories/%E7%BC%96%E7%A8%8B/">编程</a>
+              </p>
+              <p class="item-title">
+                <a href="/2021/02/02/recast-1/" class="title">导航网格-基础概念&amp;数据结构</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2021-02-02T16:38:43.000Z" itemprop="datePublished">2021-02-02</time>
+              </p>
+            </div>
+          </li>
+          
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                <a class="category-link" href="/categories/mongo/">mongo</a>
+              </p>
+              <p class="item-title">
+                <a href="/2021/01/19/mongo-metas/" class="title">mongo 杂记</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2021-01-19T10:22:54.000Z" itemprop="datePublished">2021-01-19</time>
+              </p>
+            </div>
+          </li>
+          
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                <a class="category-link" href="/categories/%E7%BC%96%E7%A8%8B/">编程</a>
+              </p>
+              <p class="item-title">
+                <a href="/2020/11/08/py-attribute/" class="title">Python 如何查找属性</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2020-11-08T15:21:28.000Z" itemprop="datePublished">2020-11-08</time>
+              </p>
+            </div>
+          </li>
+          
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                <a class="category-link" href="/categories/%E7%BC%96%E7%A8%8B/">编程</a>
+              </p>
+              <p class="item-title">
+                <a href="/2020/10/10/network-tcp-optimization/" class="title">Linux TCP/IP 性能调优</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2020-10-10T03:51:46.000Z" itemprop="datePublished">2020-10-10</time>
+              </p>
+            </div>
+          </li>
+          
+      </ul>
+    </div>
+  </div>
+  
+
+    
+  </div>
+</aside>
+
+  
+  
+<main class="main" role="main">
+  <div class="content">
+  <article id="post-go-memory-alignment" class="article article-type-post" itemscope itemtype="http://schema.org/BlogPosting">
+    
+    <div class="article-header">
+      
+        
+  
+    <h1 class="article-title" itemprop="name">
+      Go - 内存对齐
+    </h1>
+  
+
+      
+      <div class="article-meta">
+        <span class="article-date">
+    <i class="icon icon-calendar-check"></i>
+	<a href="/2019/11/27/go-memory-alignment/" class="article-date">
+	  <time datetime="2019-11-27T14:28:46.000Z" itemprop="datePublished">2019-11-27</time>
+	</a>
+</span>
+        
+  <span class="article-category">
+    <i class="icon icon-folder"></i>
+    <a class="article-category-link" href="/categories/%E7%BC%96%E7%A8%8B/">编程</a>
+  </span>
+
+        
+  <span class="article-tag">
+    <i class="icon icon-tags"></i>
+	<a class="article-tag-link" href="/tags/Golang/" rel="tag">Golang</a>
+  </span>
+
+
+        
+	<span class="article-read hidden-xs">
+	    <i class="icon icon-eye-fill" aria-hidden="true"></i>
+	    <span id="busuanzi_container_page_pv">
+			<span id="busuanzi_value_page_pv">0</span>
+		</span>
+	</span>
+
+
+        <span class="post-comment"><i class="icon icon-comment"></i> <a href="/2019/11/27/go-memory-alignment/#comments" class="article-comment-link">评论</a></span>
+        
+      </div>
+    </div>
+    <div class="article-entry marked-body" itemprop="articleBody">
+      
+        <blockquote>
+<p><a href="https://eddycjy.com/posts/go/talk/2018-12-26-go-memory-align/" target="_blank" rel="noopener">原文地址</a></p>
+</blockquote>
+<h1 id="问题"><a href="#问题" class="headerlink" title="问题"></a>问题</h1><figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">type</span> Part1 <span class="keyword">struct</span> &#123;</span><br><span class="line">	a <span class="keyword">bool</span></span><br><span class="line">	b <span class="keyword">int32</span></span><br><span class="line">	c <span class="keyword">int8</span></span><br><span class="line">	d <span class="keyword">int64</span></span><br><span class="line">	e <span class="keyword">byte</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<ul>
+<li>在开始之前，希望你计算一下 Part1 共占用的大小是多少呢？</li>
+</ul>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">	fmt.Printf(<span class="string">"bool size: %d\n"</span>, unsafe.Sizeof(<span class="keyword">bool</span>(<span class="literal">true</span>)))</span><br><span class="line">	fmt.Printf(<span class="string">"int32 size: %d\n"</span>, unsafe.Sizeof(<span class="keyword">int32</span>(<span class="number">0</span>)))</span><br><span class="line">	fmt.Printf(<span class="string">"int8 size: %d\n"</span>, unsafe.Sizeof(<span class="keyword">int8</span>(<span class="number">0</span>)))</span><br><span class="line">	fmt.Printf(<span class="string">"int64 size: %d\n"</span>, unsafe.Sizeof(<span class="keyword">int64</span>(<span class="number">0</span>)))</span><br><span class="line">	fmt.Printf(<span class="string">"byte size: %d\n"</span>, unsafe.Sizeof(<span class="keyword">byte</span>(<span class="number">0</span>)))</span><br><span class="line">	fmt.Printf(<span class="string">"string size: %d\n"</span>, unsafe.Sizeof(<span class="string">"EDDYCJY"</span>))</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li><p>输出结果：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">bool size: 1</span><br><span class="line">int32 size: 4</span><br><span class="line">int8 size: 1</span><br><span class="line">int64 size: 8</span><br><span class="line">byte size: 1</span><br><span class="line">string size: 16</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>这么一算，Part1 这一个结构体的占用内存大小为 1+4+1+8+1 = 15 个字节。相信有的小伙伴是这么算的，看上去也没什么毛病</p>
+</li>
+<li><p>真实情况是怎么样的呢？我们实际调用看看，如下：</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">type</span> Part1 <span class="keyword">struct</span> &#123;</span><br><span class="line">	a <span class="keyword">bool</span></span><br><span class="line">	b <span class="keyword">int32</span></span><br><span class="line">	c <span class="keyword">int8</span></span><br><span class="line">	d <span class="keyword">int64</span></span><br><span class="line">	e <span class="keyword">byte</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">	part1 := Part1&#123;&#125;</span><br><span class="line"></span><br><span class="line">	fmt.Printf(<span class="string">"part1 size: %d, align: %d\n"</span>, unsafe.Sizeof(part1), unsafe.Alignof(part1))</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>输出结果：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">part1 size: 32, align: 8</span><br></pre></td></tr></table></figure></li>
+<li><p>最终输出为占用 32 个字节。这与前面所预期的结果完全不一样。这充分地说明了先前的计算方式是错误的。为什么呢？</p>
+</li>
+<li><p>在这里要提到 “内存对齐” 这一概念，才能够用正确的姿势去计算，接下来我们详细的讲讲它是什么</p>
+</li>
+</ul>
+<h1 id="内存对齐"><a href="#内存对齐" class="headerlink" title="内存对齐"></a>内存对齐</h1><ul>
+<li><p>有的小伙伴可能会认为内存读取，就是一个简单的字节数组摆放<br><img src="/images/posts/go-memory-alignment/1.png" alt="内存读取的错误理解"></p>
+</li>
+<li><p>上图表示一个坑一个萝卜的内存读取方式。但实际上 CPU 并不会以一个一个字节去读取和写入内存。相反 CPU 读取内存是一块一块读取的，块的大小可以为 2、4、6、8、16 字节等大小。块大小我们称其为内存访问粒度。如下图：<br><img src="/images/posts/go-memory-alignment/2.png" alt="内存读取"></p>
+</li>
+<li><p>在样例中，假设访问粒度为 4。 CPU 是以每 4 个字节大小的访问粒度去读取和写入内存的。这才是正确的姿势</p>
+</li>
+</ul>
+<h1 id="为什么要关心对齐"><a href="#为什么要关心对齐" class="headerlink" title="为什么要关心对齐"></a>为什么要关心对齐</h1><ol>
+<li>你正在编写的代码在性能（CPU、Memory）方面有一定的要求</li>
+<li>你正在处理向量方面的指令</li>
+<li>某些硬件平台（ARM）体系不支持未对齐的内存访问</li>
+</ol>
+<ul>
+<li>另外作为一个工程师，你也很有必要学习这块知识点哦 :)</li>
+</ul>
+<h1 id="为什么要做对齐"><a href="#为什么要做对齐" class="headerlink" title="为什么要做对齐"></a>为什么要做对齐</h1><ul>
+<li><p>平台（移植性）原因：不是所有的硬件平台都能够访问任意地址上的任意数据。例如：特定的硬件平台只允许在特定地址获取特定类型的数据，否则会导致异常情况</p>
+</li>
+<li><p>性能原因：若访问未对齐的内存，将会导致 CPU 进行两次内存访问，并且要花费额外的时钟周期来处理对齐及运算。而本身就对齐的内存仅需要一次访问就可以完成读取动作<br><img src="/images/posts/go-memory-alignment/3.png" alt="无内存对齐的内存读取"></p>
+</li>
+<li><p>在上图中，假设从 Index 1 开始读取，将会出现很崩溃的问题。因为它的内存访问边界是不对齐的。因此 CPU 会做一些额外的处理工作。如下：</p>
+<ol>
+<li>CPU 首次读取未对齐地址的第一个内存块，读取 0-3 字节。并移除不需要的字节 0</li>
+<li>CPU 再次读取未对齐地址的第二个内存块，读取 4-7 字节。并移除不需要的字节 5、6、7 字节</li>
+<li>合并 1-4 字节的数据</li>
+<li>合并后放入寄存器</li>
+</ol>
+</li>
+<li><p>从上述流程可得出，不做 “内存对齐” 是一件有点 “麻烦” 的事。因为它会增加许多耗费时间的动作</p>
+</li>
+<li><p>而假设做了内存对齐，从 Index 0 开始读取 4 个字节，只需要读取一次，也不需要额外的运算。这显然高效很多，是标准的空间换时间做法</p>
+</li>
+</ul>
+<h1 id="默认系数"><a href="#默认系数" class="headerlink" title="默认系数"></a>默认系数</h1><ul>
+<li><p>在不同平台上的编译器都有自己默认的 “对齐系数”，可通过预编译命令 #pragma pack(n) 进行变更，n 就是代指 “对齐系数”。一般来讲，我们常用的平台的系数如下：</p>
+<ul>
+<li>32 位：4</li>
+<li>64 位：8</li>
+</ul>
+</li>
+<li><p>另外要注意，不同硬件平台占用的大小和对齐值都可能是不一样的。因此本文的值不是唯一的，调试的时候需按本机的实际情况考虑</p>
+</li>
+</ul>
+<h2 id="成员对齐"><a href="#成员对齐" class="headerlink" title="成员对齐"></a>成员对齐</h2><figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">	fmt.Printf(<span class="string">"bool align: %d\n"</span>, unsafe.Alignof(<span class="keyword">bool</span>(<span class="literal">true</span>)))</span><br><span class="line">	fmt.Printf(<span class="string">"int32 align: %d\n"</span>, unsafe.Alignof(<span class="keyword">int32</span>(<span class="number">0</span>)))</span><br><span class="line">	fmt.Printf(<span class="string">"int8 align: %d\n"</span>, unsafe.Alignof(<span class="keyword">int8</span>(<span class="number">0</span>)))</span><br><span class="line">	fmt.Printf(<span class="string">"int64 align: %d\n"</span>, unsafe.Alignof(<span class="keyword">int64</span>(<span class="number">0</span>)))</span><br><span class="line">	fmt.Printf(<span class="string">"byte align: %d\n"</span>, unsafe.Alignof(<span class="keyword">byte</span>(<span class="number">0</span>)))</span><br><span class="line">	fmt.Printf(<span class="string">"string align: %d\n"</span>, unsafe.Alignof(<span class="string">"EDDYCJY"</span>))</span><br><span class="line">	fmt.Printf(<span class="string">"map align: %d\n"</span>, unsafe.Alignof(<span class="keyword">map</span>[<span class="keyword">string</span>]<span class="keyword">string</span>&#123;&#125;))</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li><p>输出结果:</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">bool align: 1</span><br><span class="line">int32 align: 4</span><br><span class="line">int8 align: 1</span><br><span class="line">int64 align: 8</span><br><span class="line">byte align: 1</span><br><span class="line">string align: 8</span><br><span class="line">map align: 8</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>在 Go 中可以调用 unsafe.Alignof 来返回相应类型的对齐系数。通过观察输出结果，可得知基本都是 2^n，最大也不会超过 8。这是因为我手提（64 位）编译器默认对齐系数是 8，因此最大值不会超过这个数</p>
+</li>
+</ul>
+<h2 id="整体对齐"><a href="#整体对齐" class="headerlink" title="整体对齐"></a>整体对齐</h2><ul>
+<li>在上小节中，提到了结构体中的成员变量要做字节对齐。那么想当然身为最终结果的结构体，也是需要做字节对齐的</li>
+</ul>
+<h1 id="对齐规则"><a href="#对齐规则" class="headerlink" title="对齐规则"></a>对齐规则</h1><ul>
+<li>结构体的成员变量，第一个成员变量的偏移量为 0。往后的每个成员变量的对齐值必须为编译器默认对齐长度（#pragma pack(n)）或当前成员变量类型的长度（unsafe.Sizeof），取最小值作为当前类型的对齐值。其偏移量必须为对齐值的整数倍</li>
+<li>结构体本身，对齐值必须为编译器默认对齐长度（#pragma pack(n)）或结构体的所有成员变量类型中的最大长度，取最大数的最小整数倍作为对齐值</li>
+<li>结合以上两点，可得知若编译器默认对齐长度（#pragma pack(n)）超过结构体内成员变量的类型最大长度时，默认对齐长度是没有任何意义的</li>
+</ul>
+<h1 id="分析流程"><a href="#分析流程" class="headerlink" title="分析流程"></a>分析流程</h1><ul>
+<li>接下来我们一起分析一下，“它” 到底经历了些什么，影响了 “预期” 结果<table>
+<thead>
+<tr>
+<th align="center">成员变量</th>
+<th align="center">类型</th>
+<th align="center">偏移量</th>
+<th align="center">自身占用</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="center">a</td>
+<td align="center">bool</td>
+<td align="center">0</td>
+<td align="center">1</td>
+</tr>
+<tr>
+<td align="center">字节对齐</td>
+<td align="center">无</td>
+<td align="center">1</td>
+<td align="center">3</td>
+</tr>
+<tr>
+<td align="center">b</td>
+<td align="center">int32</td>
+<td align="center">4</td>
+<td align="center">4</td>
+</tr>
+<tr>
+<td align="center">c</td>
+<td align="center">int8</td>
+<td align="center">8</td>
+<td align="center">1</td>
+</tr>
+<tr>
+<td align="center">字节对齐</td>
+<td align="center">无</td>
+<td align="center">9</td>
+<td align="center">7</td>
+</tr>
+<tr>
+<td align="center">d</td>
+<td align="center">int64</td>
+<td align="center">16</td>
+<td align="center">8</td>
+</tr>
+<tr>
+<td align="center">e</td>
+<td align="center">byte</td>
+<td align="center">24</td>
+<td align="center">1</td>
+</tr>
+<tr>
+<td align="center">字节对齐</td>
+<td align="center">无</td>
+<td align="center">25</td>
+<td align="center">7</td>
+</tr>
+<tr>
+<td align="center">总占用大小</td>
+<td align="center">-</td>
+<td align="center">-</td>
+<td align="center">32</td>
+</tr>
+</tbody></table>
+</li>
+</ul>
+<h2 id="成员对齐-1"><a href="#成员对齐-1" class="headerlink" title="成员对齐"></a>成员对齐</h2><ul>
+<li>第一个成员 a<ul>
+<li>类型为 bool</li>
+<li>大小/对齐值为 1 字节</li>
+<li>初始地址，偏移量为 0。占用了第 1 位</li>
+</ul>
+</li>
+<li>第二个成员 b<ul>
+<li>类型为 int32</li>
+<li>大小/对齐值为 4 字节</li>
+<li>根据规则 1，其偏移量必须为 4 的整数倍。确定偏移量为 4，因此 2-4 位为 Padding。而当前数值从第 5 位开始填充，到第 8 位。如下：axxx|bbbb</li>
+</ul>
+</li>
+<li>第三个成员 c<ul>
+<li>类型为 int8</li>
+<li>大小/对齐值为 1 字节</li>
+<li>根据规则 1，其偏移量必须为 1 的整数倍。当前偏移量为 8。不需要额外对齐，填充 1 个字节到第 9 位。如下：axxx|bbbb|c…</li>
+</ul>
+</li>
+<li>第四个成员 d<ul>
+<li>类型为 int64</li>
+<li>大小/对齐值为 8 字节</li>
+<li>根据规则 1，其偏移量必须为 8 的整数倍。确定偏移量为 16，因此 9-16 位为 Padding。而当前数值从第 17 位开始写入，到第 24 位。如下：axxx|bbbb|cxxx|xxxx|dddd|dddd</li>
+</ul>
+</li>
+<li>第五个成员 e<ul>
+<li>类型为 byte</li>
+<li>大小/对齐值为 1 字节</li>
+<li>根据规则 1，其偏移量必须为 1 的整数倍。当前偏移量为 24。不需要额外对齐，填充 1 个字节到第 25 位。如下：axxx|bbbb|cxxx|xxxx|dddd|dddd|e…</li>
+</ul>
+</li>
+</ul>
+<h2 id="整体对齐-1"><a href="#整体对齐-1" class="headerlink" title="整体对齐"></a>整体对齐</h2><ul>
+<li>在每个成员变量进行对齐后，根据规则 2，整个结构体本身也要进行字节对齐，因为可发现它可能并不是 2^n，不是偶数倍。显然不符合对齐的规则</li>
+<li>根据规则 2，可得出对齐值为 8。现在的偏移量为 25，不是 8 的整倍数。因此确定偏移量为 32。对结构体进行对齐</li>
+</ul>
+<h2 id="结果"><a href="#结果" class="headerlink" title="结果"></a>结果</h2><ul>
+<li>Part1 内存布局：axxx|bbbb|cxxx|xxxx|dddd|dddd|exxx|xxxx</li>
+</ul>
+<h1 id="小结"><a href="#小结" class="headerlink" title="小结"></a>小结</h1><ul>
+<li><p>通过本节的分析，可得知先前的 “推算” 为什么错误？</p>
+</li>
+<li><p>是因为实际内存管理并非 “一个萝卜一个坑” 的思想。而是一块一块。通过空间换时间（效率）的思想来完成这块读取、写入。另外也需要兼顾不同平台的内存操作情况</p>
+</li>
+</ul>
+<h1 id="巧妙的结构体"><a href="#巧妙的结构体" class="headerlink" title="巧妙的结构体"></a>巧妙的结构体</h1><ul>
+<li><p>在上一小节，可得知根据成员变量的类型不同，其结构体的内存会产生对齐等动作。那假设字段顺序不同，会不会有什么变化呢？我们一起来试试吧 :-)</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">type</span> Part1 <span class="keyword">struct</span> &#123;</span><br><span class="line">	a <span class="keyword">bool</span></span><br><span class="line">	b <span class="keyword">int32</span></span><br><span class="line">	c <span class="keyword">int8</span></span><br><span class="line">	d <span class="keyword">int64</span></span><br><span class="line">	e <span class="keyword">byte</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">type</span> Part2 <span class="keyword">struct</span> &#123;</span><br><span class="line">	e <span class="keyword">byte</span></span><br><span class="line">	c <span class="keyword">int8</span></span><br><span class="line">	a <span class="keyword">bool</span></span><br><span class="line">	b <span class="keyword">int32</span></span><br><span class="line">	d <span class="keyword">int64</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">	part1 := Part1&#123;&#125;</span><br><span class="line">	part2 := Part2&#123;&#125;</span><br><span class="line"></span><br><span class="line">	fmt.Printf(<span class="string">"part1 size: %d, align: %d\n"</span>, unsafe.Sizeof(part1), unsafe.Alignof(part1))</span><br><span class="line">	fmt.Printf(<span class="string">"part2 size: %d, align: %d\n"</span>, unsafe.Sizeof(part2), unsafe.Alignof(part2))</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>输出结果：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">part1 size: 32, align: 8</span><br><span class="line">part2 size: 16, align: 8</span><br></pre></td></tr></table></figure></li>
+<li><p>通过结果可以惊喜的发现，只是 “简单” 对成员变量的字段顺序进行改变，就改变了结构体占用大小</p>
+</li>
+<li><p>接下来我们一起剖析一下 Part2，看看它的内部到底和上一位之间有什么区别，才导致了这样的结果？</p>
+</li>
+</ul>
+<h2 id="分析流程-1"><a href="#分析流程-1" class="headerlink" title="分析流程"></a>分析流程</h2><table>
+<thead>
+<tr>
+<th align="center">成员变量</th>
+<th align="center">类型</th>
+<th align="center">偏移量</th>
+<th align="center">自身占用</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="center">e</td>
+<td align="center">byte</td>
+<td align="center">0</td>
+<td align="center">1</td>
+</tr>
+<tr>
+<td align="center">c</td>
+<td align="center">int8</td>
+<td align="center">1</td>
+<td align="center">1</td>
+</tr>
+<tr>
+<td align="center">a</td>
+<td align="center">bool</td>
+<td align="center">2</td>
+<td align="center">1</td>
+</tr>
+<tr>
+<td align="center">字节对齐</td>
+<td align="center">无</td>
+<td align="center">3</td>
+<td align="center">1</td>
+</tr>
+<tr>
+<td align="center">b</td>
+<td align="center">int32</td>
+<td align="center">4</td>
+<td align="center">4</td>
+</tr>
+<tr>
+<td align="center">d</td>
+<td align="center">int64</td>
+<td align="center">8</td>
+<td align="center">8</td>
+</tr>
+<tr>
+<td align="center">总占用大小</td>
+<td align="center">-</td>
+<td align="center">-</td>
+<td align="center">16</td>
+</tr>
+</tbody></table>
+<h2 id="成员对齐-2"><a href="#成员对齐-2" class="headerlink" title="成员对齐"></a>成员对齐</h2><ul>
+<li>第一个成员 e<ul>
+<li>类型为 byte</li>
+<li>大小/对齐值为 1 字节</li>
+<li>初始地址，偏移量为 0。占用了第 1 位</li>
+</ul>
+</li>
+<li>第二个成员 c<ul>
+<li>类型为 int8</li>
+<li>大小/对齐值为 1 字节</li>
+<li>根据规则 1，其偏移量必须为 1 的整数倍。当前偏移量为 2。不需要额外对齐</li>
+</ul>
+</li>
+<li>第三个成员 a<ul>
+<li>类型为 bool</li>
+<li>大小/对齐值为 1 字节</li>
+<li>根据规则 1，其偏移量必须为 1 的整数倍。当前偏移量为 3。不需要额外对齐</li>
+</ul>
+</li>
+<li>第四个成员 b<ul>
+<li>类型为 int32</li>
+<li>大小/对齐值为 4 字节</li>
+<li>根据规则 1，其偏移量必须为 4 的整数倍。确定偏移量为 4，因此第 3 位为 Padding。而当前数值从第 4 位开始填充，到第 8 位。如下：ecax|bbbb</li>
+</ul>
+</li>
+<li>第五个成员 d<ul>
+<li>类型为 int64</li>
+<li>大小/对齐值为 8 字节</li>
+<li>根据规则 1，其偏移量必须为 8 的整数倍。当前偏移量为 8。不需要额外对齐，从 9-16 位填充 8 个字节。如下：ecax|bbbb|dddd|dddd</li>
+</ul>
+</li>
+</ul>
+<h2 id="整体对齐-2"><a href="#整体对齐-2" class="headerlink" title="整体对齐"></a>整体对齐</h2><ul>
+<li>符合规则 2，不需要额外对齐</li>
+</ul>
+<h2 id="结果-1"><a href="#结果-1" class="headerlink" title="结果"></a>结果</h2><ul>
+<li>Part2 内存布局：ecax|bbbb|dddd|dddd</li>
+</ul>
+<h1 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h1><ul>
+<li><p>通过对比 Part1 和 Part2 的内存布局，你会发现两者有很大的不同。如下：</p>
+<ul>
+<li>Part1：axxx|bbbb|cxxx|xxxx|dddd|dddd|exxx|xxxx</li>
+<li>Part2：ecax|bbbb|dddd|dddd</li>
+</ul>
+</li>
+<li><p>仔细一看，Part1 存在许多 Padding。显然它占据了不少空间，那么 Padding 是怎么出现的呢？</p>
+</li>
+<li><p>通过本文的介绍，可得知是由于不同类型导致需要进行字节对齐，以此保证内存的访问边界</p>
+</li>
+<li><p>那么也不难理解，为什么调整结构体内成员变量的字段顺序就能达到缩小结构体占用大小的疑问了，是因为巧妙地减少了 Padding 的存在。让它们更 “紧凑” 了。这一点对于加深 Go 的内存布局印象和大对象的优化非常有帮</p>
+</li>
+<li><p>当然了，没什么特殊问题，你可以不关注这一块。但你要知道这块知识点 😄</p>
+</li>
+</ul>
+
+      
+    </div>
+    <div class="article-footer">
+      <blockquote class="mt-2x">
+  <ul class="post-copyright list-unstyled">
+    
+    <li class="post-copyright-link hidden-xs">
+      <strong>本文链接：</strong>
+      <a href="https://overtalk.site/2019/11/27/go-memory-alignment/" title="Go - 内存对齐" target="_blank" rel="external">https://overtalk.site/2019/11/27/go-memory-alignment/</a>
+    </li>
+    
+    <li class="post-copyright-license">
+      <strong>版权声明： </strong> 本博客所有文章除特别声明外，均采用 <a href="http://creativecommons.org/licenses/by/4.0/deed.zh" target="_blank" rel="external">CC BY 4.0 CN协议</a> 许可协议。转载请注明出处！
+    </li>
+  </ul>
+</blockquote>
+
+
+<div class="panel panel-default panel-badger">
+  <div class="panel-body">
+    <figure class="media">
+      <div class="media-left">
+        <a href="https://github.com/overtalk" target="_blank" class="img-burn thumb-sm visible-lg">
+          <img src="/images/avatar.png" class="img-rounded w-full" alt="">
+        </a>
+      </div>
+      <div class="media-body">
+        <h3 class="media-heading"><a href="https://github.com/overtalk" target="_blank"><span class="text-dark">QinHan</span><small class="ml-1x">Game Developer &amp; Designer</small></a></h3>
+        <div>当你发现自己的才华撑不起野心时，就请安静下来学习吧！</div>
+      </div>
+    </figure>
+  </div>
+</div>
+
+
+    </div>
+  </article>
+  
+    
+  <section id="comments">
+  	
+           
+    
+  </section>
+
+
+  
+</div>
+
+  <nav class="bar bar-footer clearfix" data-stick-bottom>
+  <div class="bar-inner">
+  
+  <ul class="pager pull-left">
+    
+    <li class="prev">
+      <a href="/2019/12/04/go-staticlib/" title="golang 编译静态库"><i class="icon icon-angle-left" aria-hidden="true"></i><span>&nbsp;&nbsp;上一篇</span></a>
+    </li>
+    
+    
+    <li class="next">
+      <a href="/2019/11/26/dw/" title="数据仓库是什么"><span>下一篇&nbsp;&nbsp;</span><i class="icon icon-angle-right" aria-hidden="true"></i></a>
+    </li>
+    
+    
+  </ul>
+  
+  
+  <!-- Button trigger modal -->
+  <button type="button" class="btn btn-fancy btn-donate pop-onhover bg-gradient-warning" data-toggle="modal" data-target="#donateModal"><span>赏</span></button>
+  <!-- <div class="wave-icon wave-icon-danger btn-donate" data-toggle="modal" data-target="#donateModal">
+    <div class="wave-circle"><span class="icon"><i class="icon icon-bill"></i></span></div>
+  </div> -->
+  
+  
+  <div class="bar-right">
+    
+    <div class="share-component" data-sites="weibo,qq,wechat,facebook,twitter" data-mobile-sites="weibo,qq,qzone"></div>
+    
+  </div>
+  </div>
+</nav>
+  
+<!-- Modal -->
+<div class="modal modal-center modal-small modal-xs-full fade" id="donateModal" tabindex="-1" role="dialog">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content donate">
+      <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+      <div class="modal-body">
+        <div class="donate-box">
+          <div class="donate-head">
+            <p>感谢您的支持，我会继续努力的!</p>
+          </div>
+          <div class="tab-content">
+            <div role="tabpanel" class="tab-pane fade active in" id="alipay">
+              <div class="donate-payimg">
+                <img src="/images/donate/alipayimg.png" alt="扫码支持" title="扫一扫" />
+              </div>
+              <p class="text-muted mv">喜欢就收藏，疼爱就打赏！</p>
+              <p class="text-grey">支付宝扫一扫</p>
+            </div>
+            <div role="tabpanel" class="tab-pane fade" id="wechatpay">
+              <div class="donate-payimg">
+                <img src="/images/donate/wechatpayimg.png" alt="扫码支持" title="扫一扫" />
+              </div>
+              <p class="text-muted mv">喜欢就收藏，疼爱就打赏！</p>
+              <p class="text-grey">微信扫一扫</p>
+            </div>
+          </div>
+          <div class="donate-footer">
+            <ul class="nav nav-tabs nav-justified" role="tablist">
+              <li role="presentation" class="active">
+                <a href="#alipay" id="alipay-tab" role="tab" data-toggle="tab" aria-controls="alipay" aria-expanded="true"><i class="icon icon-alipay"></i> 支付宝</a>
+              </li>
+              <li role="presentation" class="">
+                <a href="#wechatpay" role="tab" id="wechatpay-tab" data-toggle="tab" aria-controls="wechatpay" aria-expanded="false"><i class="icon icon-wepay"></i> 微信支付</a>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+
+</main>
+
+  <footer class="footer" itemscope itemtype="http://schema.org/WPFooter">
+	
+	
+    <ul class="social-links">
+    	
+        <li><a href="https://github.com/overtalk" target="_blank" title="Github" data-toggle=tooltip data-placement=top><i class="icon icon-github"></i></a></li>
+        
+        <li><a href="/atom.xml" target="_blank" title="Rss" data-toggle=tooltip data-placement=top><i class="icon icon-rss"></i></a></li>
+        
+    </ul>
+
+    <div class="copyright">
+    	
+        <div class="publishby">
+        	Powered by <a href="https://hexo.io/" target="_blank"> Hexo </a>base on <a href="https://github.com/cofess/hexo-theme-pure" target="_blank">pure</a>.
+        </div>
+    </div>
+</footer>
+  <script src="//cdn.jsdelivr.net/npm/jquery@1.12.4/dist/jquery.min.js"></script>
+<script>
+window.jQuery || document.write('<script src="js/jquery.min.js"><\/script>')
+</script>
+<script src="/js/plugin.min.js"></script>
+<script src="/js/application.js"></script>
+
+    <script>
+(function (window) {
+    var INSIGHT_CONFIG = {
+        TRANSLATION: {
+            POSTS: '文章',
+            PAGES: '页面',
+            CATEGORIES: '分类',
+            TAGS: '标签',
+            UNTITLED: '(未命名)',
+        },
+        ROOT_URL: '/',
+        CONTENT_URL: '/content.json',
+    };
+    window.INSIGHT_CONFIG = INSIGHT_CONFIG;
+})(window);
+</script>
+<script src="/js/insight.js"></script>
+
+
+
+
+
+   
+<script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+
+
+
+   
+    
+  <!-- <link rel="stylesheet" href="https://unpkg.com/gitalk/dist/gitalk.css"> -->
+  <script src="//cdn.jsdelivr.net/npm/gitalk@1.4.0/dist/gitalk.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/blueimp-md5@2.10.0/js/md5.min.js"></script>
+  <script type="text/javascript">
+  var gitalk = new Gitalk({
+    clientID: '8b37930d2d91b16067d3',
+    clientSecret: '3e1cf0374a8d938b6e1d1c8239ff068ac5de5c96',
+    repo: 'overtalk.github.io',
+    owner: 'overtalk',
+    admin: ['overtalk'],
+    id: md5(location.pathname),
+    distractionFreeMode: true
+  })
+  gitalk.render('comments')
+  </script>
+
+      
+
+
+
+
+
+
+
+</body>
+</html>

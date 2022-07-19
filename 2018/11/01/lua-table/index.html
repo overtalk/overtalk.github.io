@@ -1,0 +1,662 @@
+<!DOCTYPE html>
+<html lang=zh>
+<head>
+  <meta charset="utf-8">
+  
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no, minimal-ui">
+  <meta name="renderer" content="webkit">
+  <meta http-equiv="Cache-Control" content="no-transform" />
+  <meta http-equiv="Cache-Control" content="no-siteapp" />
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <meta name="format-detection" content="telephone=no,email=no,adress=no">
+  <!-- Color theme for statusbar -->
+  <meta name="theme-color" content="#000000" />
+  <!-- 强制页面在当前窗口以独立页面显示,防止别人在框架里调用页面 -->
+  <meta http-equiv="window-target" content="_top" />
+  
+  
+  <title>Lua - table库 | Overtalk</title>
+  <meta name="description" content="lua table  table 库 table 库是由一些辅助函数构成的，这些函数将 table 作为数组来操作。  下标从 1 开始 在 Lua 中，数组下标从 1 开始计数。  官方解释：Lua lists have a base index of 1 because it was thought to be most friendly for non-programmers, as it">
+<meta name="keywords" content="lua">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Lua - table库">
+<meta property="og:url" content="https:&#x2F;&#x2F;overtalk.site&#x2F;2018&#x2F;11&#x2F;01&#x2F;lua-table&#x2F;index.html">
+<meta property="og:site_name" content="QinHan&#39;s Site">
+<meta property="og:description" content="lua table  table 库 table 库是由一些辅助函数构成的，这些函数将 table 作为数组来操作。  下标从 1 开始 在 Lua 中，数组下标从 1 开始计数。  官方解释：Lua lists have a base index of 1 because it was thought to be most friendly for non-programmers, as it">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:updated_time" content="2022-07-19T07:53:37.897Z">
+<meta name="twitter:card" content="summary">
+  <!-- Canonical links -->
+  <link rel="canonical" href="https://overtalk.site/2018/11/01/lua-table/index.html">
+  
+    <link rel="alternate" href="/atom.xml" title="QinHan&#39;s Site" type="application/atom+xml">
+  
+  
+    <link rel="icon" href="/favicon.png" type="image/x-icon">
+  
+  <link rel="stylesheet" href="/css/style.css">
+  
+  
+  
+  
+    <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/gitalk@1.4.0/dist/gitalk.min.css">
+  
+</head>
+
+
+<body class="main-center theme-black" itemscope itemtype="http://schema.org/WebPage">
+  <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+  <div class="slimContent">
+    <div class="navbar-header">
+      
+      
+      <div class="profile-block text-center">
+        <a id="avatar" href="https://github.com/overtalk" target="_blank">
+          <img class="img-circle img-rotate" src="/images/avatar.png" width="200" height="200">
+        </a>
+        <h2 id="name" class="hidden-xs hidden-sm">QinHan</h2>
+        <h3 id="title" class="hidden-xs hidden-sm hidden-md">Game Developer &amp; Designer</h3>
+        <small id="location" class="text-muted hidden-xs hidden-sm"><i class="icon icon-map-marker"></i> Shanghai, China</small>
+      </div>
+      
+      <div class="search" id="search-form-wrap">
+
+    <form class="search-form sidebar-form">
+        <div class="input-group">
+            <input type="text" class="search-form-input form-control" placeholder="搜索" />
+            <span class="input-group-btn">
+                <button type="submit" class="search-form-submit btn btn-flat" onclick="return false;"><i class="icon icon-search"></i></button>
+            </span>
+        </div>
+    </form>
+    <div class="ins-search">
+  <div class="ins-search-mask"></div>
+  <div class="ins-search-container">
+    <div class="ins-input-wrapper">
+      <input type="text" class="ins-search-input" placeholder="想要查找什么..." x-webkit-speech />
+      <button type="button" class="close ins-close ins-selectable" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button>
+    </div>
+    <div class="ins-section-wrapper">
+      <div class="ins-section-container"></div>
+    </div>
+  </div>
+</div>
+
+
+</div>
+      <button class="navbar-toggle collapsed" type="button" data-toggle="collapse" data-target="#main-navbar" aria-controls="main-navbar" aria-expanded="false">
+        <span class="sr-only">Toggle navigation</span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+    </div>
+    <nav id="main-navbar" class="collapse navbar-collapse" itemscope itemtype="http://schema.org/SiteNavigationElement" role="navigation">
+      <ul class="nav navbar-nav main-nav menu-highlight">
+        
+        
+        <li class="menu-item menu-item-home">
+          <a href="/.">
+            
+            <i class="icon icon-home-fill"></i>
+            
+            <span class="menu-title">首页</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives">
+            
+            <i class="icon icon-archives-fill"></i>
+            
+            <span class="menu-title">归档</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories">
+            
+            <i class="icon icon-folder"></i>
+            
+            <span class="menu-title">分类</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags">
+            
+            <i class="icon icon-tags"></i>
+            
+            <span class="menu-title">标签</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-repository">
+          <a href="/repository">
+            
+            <i class="icon icon-project"></i>
+            
+            <span class="menu-title">项目</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-links">
+          <a href="/links">
+            
+            <i class="icon icon-friendship"></i>
+            
+            <span class="menu-title">友链</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about">
+            
+            <i class="icon icon-cup-fill"></i>
+            
+            <span class="menu-title">关于</span>
+          </a>
+        </li>
+        
+      </ul>
+      
+	
+    <ul class="social-links">
+    	
+        <li><a href="https://github.com/overtalk" target="_blank" title="Github" data-toggle=tooltip data-placement=top><i class="icon icon-github"></i></a></li>
+        
+        <li><a href="/atom.xml" target="_blank" title="Rss" data-toggle=tooltip data-placement=top><i class="icon icon-rss"></i></a></li>
+        
+    </ul>
+
+    </nav>
+  </div>
+</header>
+
+  
+    <aside class="sidebar" itemscope itemtype="http://schema.org/WPSideBar">
+  <div class="slimContent">
+    
+      <div class="widget">
+    <h3 class="widget-title">公告</h3>
+    <div class="widget-body">
+        <div id="board">
+            <div class="content">
+                <p>欢迎交流与分享经验!</p><p>邮箱：qinhan_shu@163.com</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">分类</h3>
+    <div class="widget-body">
+      <ul class="category-list"><li class="category-list-item"><a class="category-list-link" href="/categories/fragment/">fragment</a><span class="category-list-count">3</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/interview/">interview</a><span class="category-list-count">4</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/jewellery/">jewellery</a><span class="category-list-count">4</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/linux/">linux</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/minio/">minio</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/mongo/">mongo</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/rtc/">rtc</a><span class="category-list-count">3</span><ul class="category-list-child"><li class="category-list-item"><a class="category-list-link" href="/categories/rtc/book/">book</a><span class="category-list-count">1</span><ul class="category-list-child"><li class="category-list-item"><a class="category-list-link" href="/categories/rtc/book/freeswitch/">freeswitch</a><span class="category-list-count">1</span></li></ul></li></ul></li><li class="category-list-item"><a class="category-list-link" href="/categories/%E7%BC%96%E7%A8%8B/">编程</a><span class="category-list-count">141</span><ul class="category-list-child"><li class="category-list-item"><a class="category-list-link" href="/categories/%E7%BC%96%E7%A8%8B/%E6%B8%B8%E6%88%8F/">游戏</a><span class="category-list-count">1</span></li></ul></li><li class="category-list-item"><a class="category-list-link" href="/categories/%E9%9A%8F%E7%AC%94/">随笔</a><span class="category-list-count">2</span></li></ul>
+    </div>
+  </div>
+
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">标签</h3>
+    <div class="widget-body">
+      <ul class="tag-list" itemprop="keywords"><li class="tag-list-item"><a class="tag-list-link" href="/tags/CI-CD/" rel="tag">CI/CD</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Docker/" rel="tag">Docker</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Golang/" rel="tag">Golang</a><span class="tag-list-count">35</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Nagle/" rel="tag">Nagle</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Network/" rel="tag">Network</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Redis/" rel="tag">Redis</a><span class="tag-list-count">6</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Redis%E5%A4%87%E4%BB%BD/" rel="tag">Redis备份</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Shadowsocks/" rel="tag">Shadowsocks</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Socks5/" rel="tag">Socks5</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/algorithm/" rel="tag">algorithm</a><span class="tag-list-count">8</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/clion/" rel="tag">clion</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/cpp/" rel="tag">cpp</a><span class="tag-list-count">50</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/docker/" rel="tag">docker</a><span class="tag-list-count">3</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/dw/" rel="tag">dw</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/endian/" rel="tag">endian</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/epoll/" rel="tag">epoll</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/freeswitch/" rel="tag">freeswitch</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/git/" rel="tag">git</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/gpg/" rel="tag">gpg</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/interview/" rel="tag">interview</a><span class="tag-list-count">4</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/io/" rel="tag">io</a><span class="tag-list-count">3</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/ip/" rel="tag">ip</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/iptables/" rel="tag">iptables</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/k8s/" rel="tag">k8s</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/kernal/" rel="tag">kernal</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/linux/" rel="tag">linux</a><span class="tag-list-count">8</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/loadbalance/" rel="tag">loadbalance</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/lock-free/" rel="tag">lock-free</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/lua/" rel="tag">lua</a><span class="tag-list-count">9</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/mac/" rel="tag">mac</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/mongo/" rel="tag">mongo</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/mysql/" rel="tag">mysql</a><span class="tag-list-count">3</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/network/" rel="tag">network</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/python/" rel="tag">python</a><span class="tag-list-count">3</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/recastnavigation/" rel="tag">recastnavigation</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/regex/" rel="tag">regex</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/rtc/" rel="tag">rtc</a><span class="tag-list-count">3</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/service-mesh/" rel="tag">service mesh</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/shadowsocks/" rel="tag">shadowsocks</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/shell/" rel="tag">shell</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/ssh/" rel="tag">ssh</a><span class="tag-list-count">3</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/systemcall/" rel="tag">systemcall</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/systemd/" rel="tag">systemd</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/tcp/" rel="tag">tcp</a><span class="tag-list-count">6</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E4%B8%AA%E4%BA%BA%E7%BD%91%E7%9B%98/" rel="tag">个人网盘</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%B9%B6%E5%8F%91/" rel="tag">并发</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E6%B8%B8%E6%88%8F/" rel="tag">游戏</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E9%9A%8F%E7%AC%94/" rel="tag">随笔</a><span class="tag-list-count">2</span></li></ul>
+    </div>
+  </div>
+
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">标签云</h3>
+    <div class="widget-body tagcloud">
+      <a href="/tags/CI-CD/" style="font-size: 13px;">CI/CD</a> <a href="/tags/Docker/" style="font-size: 13px;">Docker</a> <a href="/tags/Golang/" style="font-size: 13.88px;">Golang</a> <a href="/tags/Nagle/" style="font-size: 13px;">Nagle</a> <a href="/tags/Network/" style="font-size: 13px;">Network</a> <a href="/tags/Redis/" style="font-size: 13.5px;">Redis</a> <a href="/tags/Redis%E5%A4%87%E4%BB%BD/" style="font-size: 13px;">Redis备份</a> <a href="/tags/Shadowsocks/" style="font-size: 13px;">Shadowsocks</a> <a href="/tags/Socks5/" style="font-size: 13px;">Socks5</a> <a href="/tags/algorithm/" style="font-size: 13.63px;">algorithm</a> <a href="/tags/clion/" style="font-size: 13px;">clion</a> <a href="/tags/cpp/" style="font-size: 14px;">cpp</a> <a href="/tags/docker/" style="font-size: 13.25px;">docker</a> <a href="/tags/dw/" style="font-size: 13px;">dw</a> <a href="/tags/endian/" style="font-size: 13px;">endian</a> <a href="/tags/epoll/" style="font-size: 13px;">epoll</a> <a href="/tags/freeswitch/" style="font-size: 13px;">freeswitch</a> <a href="/tags/git/" style="font-size: 13px;">git</a> <a href="/tags/gpg/" style="font-size: 13px;">gpg</a> <a href="/tags/interview/" style="font-size: 13.38px;">interview</a> <a href="/tags/io/" style="font-size: 13.25px;">io</a> <a href="/tags/ip/" style="font-size: 13.13px;">ip</a> <a href="/tags/iptables/" style="font-size: 13px;">iptables</a> <a href="/tags/k8s/" style="font-size: 13px;">k8s</a> <a href="/tags/kernal/" style="font-size: 13px;">kernal</a> <a href="/tags/linux/" style="font-size: 13.63px;">linux</a> <a href="/tags/loadbalance/" style="font-size: 13.13px;">loadbalance</a> <a href="/tags/lock-free/" style="font-size: 13px;">lock-free</a> <a href="/tags/lua/" style="font-size: 13.75px;">lua</a> <a href="/tags/mac/" style="font-size: 13.13px;">mac</a> <a href="/tags/mongo/" style="font-size: 13px;">mongo</a> <a href="/tags/mysql/" style="font-size: 13.25px;">mysql</a> <a href="/tags/network/" style="font-size: 13px;">network</a> <a href="/tags/python/" style="font-size: 13.25px;">python</a> <a href="/tags/recastnavigation/" style="font-size: 13px;">recastnavigation</a> <a href="/tags/regex/" style="font-size: 13px;">regex</a> <a href="/tags/rtc/" style="font-size: 13.25px;">rtc</a> <a href="/tags/service-mesh/" style="font-size: 13px;">service mesh</a> <a href="/tags/shadowsocks/" style="font-size: 13px;">shadowsocks</a> <a href="/tags/shell/" style="font-size: 13.13px;">shell</a> <a href="/tags/ssh/" style="font-size: 13.25px;">ssh</a> <a href="/tags/systemcall/" style="font-size: 13.13px;">systemcall</a> <a href="/tags/systemd/" style="font-size: 13px;">systemd</a> <a href="/tags/tcp/" style="font-size: 13.5px;">tcp</a> <a href="/tags/%E4%B8%AA%E4%BA%BA%E7%BD%91%E7%9B%98/" style="font-size: 13px;">个人网盘</a> <a href="/tags/%E5%B9%B6%E5%8F%91/" style="font-size: 13px;">并发</a> <a href="/tags/%E6%B8%B8%E6%88%8F/" style="font-size: 13px;">游戏</a> <a href="/tags/%E9%9A%8F%E7%AC%94/" style="font-size: 13.13px;">随笔</a>
+    </div>
+  </div>
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">归档</h3>
+    <div class="widget-body">
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2022/07/">七月 2022</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/02/">二月 2021</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/01/">一月 2021</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2020/11/">十一月 2020</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2020/10/">十月 2020</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2020/08/">八月 2020</a><span class="archive-list-count">2</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2020/07/">七月 2020</a><span class="archive-list-count">15</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2020/06/">六月 2020</a><span class="archive-list-count">3</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2020/05/">五月 2020</a><span class="archive-list-count">6</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2020/04/">四月 2020</a><span class="archive-list-count">14</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2020/03/">三月 2020</a><span class="archive-list-count">16</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2020/02/">二月 2020</a><span class="archive-list-count">15</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2020/01/">一月 2020</a><span class="archive-list-count">13</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2019/12/">十二月 2019</a><span class="archive-list-count">20</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2019/11/">十一月 2019</a><span class="archive-list-count">6</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2019/10/">十月 2019</a><span class="archive-list-count">25</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2019/09/">九月 2019</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2019/08/">八月 2019</a><span class="archive-list-count">2</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2019/07/">七月 2019</a><span class="archive-list-count">9</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2019/04/">四月 2019</a><span class="archive-list-count">2</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2019/03/">三月 2019</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2018/11/">十一月 2018</a><span class="archive-list-count">9</span></li></ul>
+    </div>
+  </div>
+
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">最新文章</h3>
+    <div class="widget-body">
+      <ul class="recent-post-list list-unstyled no-thumbnail">
+        
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                
+              </p>
+              <p class="item-title">
+                <a href="/2022/07/19/bitmap/" class="title">bitmap</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2022-07-19T15:47:57.000Z" itemprop="datePublished">2022-07-19</time>
+              </p>
+            </div>
+          </li>
+          
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                <a class="category-link" href="/categories/%E7%BC%96%E7%A8%8B/">编程</a>
+              </p>
+              <p class="item-title">
+                <a href="/2021/02/02/recast-1/" class="title">导航网格-基础概念&amp;数据结构</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2021-02-02T16:38:43.000Z" itemprop="datePublished">2021-02-02</time>
+              </p>
+            </div>
+          </li>
+          
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                <a class="category-link" href="/categories/mongo/">mongo</a>
+              </p>
+              <p class="item-title">
+                <a href="/2021/01/19/mongo-metas/" class="title">mongo 杂记</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2021-01-19T10:22:54.000Z" itemprop="datePublished">2021-01-19</time>
+              </p>
+            </div>
+          </li>
+          
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                <a class="category-link" href="/categories/%E7%BC%96%E7%A8%8B/">编程</a>
+              </p>
+              <p class="item-title">
+                <a href="/2020/11/08/py-attribute/" class="title">Python 如何查找属性</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2020-11-08T15:21:28.000Z" itemprop="datePublished">2020-11-08</time>
+              </p>
+            </div>
+          </li>
+          
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                <a class="category-link" href="/categories/%E7%BC%96%E7%A8%8B/">编程</a>
+              </p>
+              <p class="item-title">
+                <a href="/2020/10/10/network-tcp-optimization/" class="title">Linux TCP/IP 性能调优</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2020-10-10T03:51:46.000Z" itemprop="datePublished">2020-10-10</time>
+              </p>
+            </div>
+          </li>
+          
+      </ul>
+    </div>
+  </div>
+  
+
+    
+  </div>
+</aside>
+
+  
+  
+<main class="main" role="main">
+  <div class="content">
+  <article id="post-lua-table" class="article article-type-post" itemscope itemtype="http://schema.org/BlogPosting">
+    
+    <div class="article-header">
+      
+        
+  
+    <h1 class="article-title" itemprop="name">
+      Lua - table库
+    </h1>
+  
+
+      
+      <div class="article-meta">
+        <span class="article-date">
+    <i class="icon icon-calendar-check"></i>
+	<a href="/2018/11/01/lua-table/" class="article-date">
+	  <time datetime="2018-11-01T04:59:43.000Z" itemprop="datePublished">2018-11-01</time>
+	</a>
+</span>
+        
+  <span class="article-category">
+    <i class="icon icon-folder"></i>
+    <a class="article-category-link" href="/categories/%E7%BC%96%E7%A8%8B/">编程</a>
+  </span>
+
+        
+  <span class="article-tag">
+    <i class="icon icon-tags"></i>
+	<a class="article-tag-link" href="/tags/lua/" rel="tag">lua</a>
+  </span>
+
+
+        
+	<span class="article-read hidden-xs">
+	    <i class="icon icon-eye-fill" aria-hidden="true"></i>
+	    <span id="busuanzi_container_page_pv">
+			<span id="busuanzi_value_page_pv">0</span>
+		</span>
+	</span>
+
+
+        <span class="post-comment"><i class="icon icon-comment"></i> <a href="/2018/11/01/lua-table/#comments" class="article-comment-link">评论</a></span>
+        
+      </div>
+    </div>
+    <div class="article-entry marked-body" itemprop="articleBody">
+      
+        <blockquote>
+<p>lua table</p>
+</blockquote>
+<h1 id="table-库"><a href="#table-库" class="headerlink" title="table 库"></a>table 库</h1><ul>
+<li>table 库是由一些辅助函数构成的，这些函数将 table 作为数组来操作。</li>
+</ul>
+<h1 id="下标从-1-开始"><a href="#下标从-1-开始" class="headerlink" title="下标从 1 开始"></a>下标从 1 开始</h1><ul>
+<li><p>在 Lua 中，数组下标从 1 开始计数。</p>
+</li>
+<li><p>官方解释：Lua lists have a base index of 1 because it was thought to be most friendly for non-programmers, as it makes indices correspond to ordinal element positions.</p>
+</li>
+<li><p>确实，对于我们数数来说，总是从 1 开始数的，而从 0 开始对于描述偏移量这样的东西有利。而 Lua 最初设计是一种类似 XML 的数据描述语言，所以索引（index）反应的是数据在里面的位置，而不是偏移量。</p>
+</li>
+<li><p>在初始化一个数组的时候，若不显式地用键值对方式赋值，则会默认用数字作为下标，从 1 开始。由于在 Lua 内部实际采用哈希表和数组分别保存键值对、普通值，所以不推荐混合使用这两种赋值方式。</p>
+</li>
+</ul>
+<figure class="highlight lua"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">local</span> color=&#123;first=<span class="string">"red"</span>, <span class="string">"blue"</span>, third=<span class="string">"green"</span>, <span class="string">"yellow"</span>&#125;</span><br><span class="line"><span class="built_in">print</span>(color[<span class="string">"first"</span>])                 <span class="comment">--&gt; output: red</span></span><br><span class="line"><span class="built_in">print</span>(color[<span class="number">1</span>])                       <span class="comment">--&gt; output: blue</span></span><br><span class="line"><span class="built_in">print</span>(color[<span class="string">"third"</span>])                 <span class="comment">--&gt; output: green</span></span><br><span class="line"><span class="built_in">print</span>(color[<span class="number">2</span>])                       <span class="comment">--&gt; output: yellow</span></span><br><span class="line"><span class="built_in">print</span>(color[<span class="number">3</span>])                       <span class="comment">--&gt; output: nil</span></span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>从其他语言过来的开发者会觉得比较坑的一点是，当我们把 table 当作栈或者队列使用的时候，容易犯错，追加到 table 的末尾用的是 s[#s+1] = something，而不是 s[#s] = something，而且如果这个 something 是一个 nil 的话，会导致这一次压栈（或者入队列）没有存入任何东西，#s 的值没有变。如果 s = { 1, 2, 3, 4, 5, 6 }，你令 s[4] = nil，#s 会令你“匪夷所思”地变成 3。</li>
+</ul>
+<h1 id="table-getn-获取长度"><a href="#table-getn-获取长度" class="headerlink" title="table.getn 获取长度"></a>table.getn 获取长度</h1><ul>
+<li><p>取长度操作符写作一元操作 #。字符串的长度是它的字节数（就是以一个字符一个字节计算的字符串长度）。</p>
+</li>
+<li><p>对于常规的数组，里面从 1 到 n 放着一些非空的值的时候，它的长度就精确的为 n，即最后一个值的下标。如果数组有一个“空洞”（就是说，nil 值被夹在非空值之间），那么 #t 可能是指向任何一个是 nil 值的前一个位置的下标（就是说，任何一个 nil 值都有可能被当成数组的结束）。这也就说明对于有“空洞”的情况，table 的长度存在一定的 <strong>不可确定性</strong>。</p>
+<figure class="highlight lua"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">local</span> tblTest1 = &#123; <span class="number">1</span>, a = <span class="number">2</span>, <span class="number">3</span> &#125;</span><br><span class="line"><span class="built_in">print</span>(<span class="string">"Test1 "</span> .. <span class="built_in">table</span>.<span class="built_in">getn</span>(tblTest1))</span><br><span class="line"></span><br><span class="line"><span class="keyword">local</span> tblTest2 = &#123; <span class="number">1</span>, <span class="literal">nil</span> &#125;</span><br><span class="line"><span class="built_in">print</span>(<span class="string">"Test2 "</span> .. <span class="built_in">table</span>.<span class="built_in">getn</span>(tblTest2))</span><br><span class="line"></span><br><span class="line"><span class="keyword">local</span> tblTest3 = &#123; <span class="number">1</span>, <span class="literal">nil</span>, <span class="number">2</span> &#125;</span><br><span class="line"><span class="built_in">print</span>(<span class="string">"Test3 "</span> .. <span class="built_in">table</span>.<span class="built_in">getn</span>(tblTest3))</span><br><span class="line"></span><br><span class="line"><span class="keyword">local</span> tblTest4 = &#123; <span class="number">1</span>, <span class="literal">nil</span>, <span class="number">2</span>, <span class="literal">nil</span> &#125;</span><br><span class="line"><span class="built_in">print</span>(<span class="string">"Test4 "</span> .. <span class="built_in">table</span>.<span class="built_in">getn</span>(tblTest4))</span><br><span class="line"></span><br><span class="line"><span class="keyword">local</span> tblTest5 = &#123; <span class="number">1</span>, <span class="literal">nil</span>, <span class="number">2</span>, <span class="literal">nil</span>, <span class="number">3</span>, <span class="literal">nil</span> &#125;</span><br><span class="line"><span class="built_in">print</span>(<span class="string">"Test5 "</span> .. <span class="built_in">table</span>.<span class="built_in">getn</span>(tblTest5))</span><br><span class="line"></span><br><span class="line"><span class="keyword">local</span> tblTest6 = &#123; <span class="number">1</span>, <span class="literal">nil</span>, <span class="number">2</span>, <span class="literal">nil</span>, <span class="number">3</span>, <span class="literal">nil</span>, <span class="number">4</span>, <span class="literal">nil</span> &#125;</span><br><span class="line"><span class="built_in">print</span>(<span class="string">"Test6 "</span> .. <span class="built_in">table</span>.<span class="built_in">getn</span>(tblTest6))</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>我们使用 Lua 5.1 和 LuaJIT 2.1 分别执行这个用例，结果如下：</p>
+</li>
+</ul>
+<figure class="highlight lua"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"># lua test.lua</span><br><span class="line">Test1 <span class="number">2</span></span><br><span class="line">Test2 <span class="number">1</span></span><br><span class="line">Test3 <span class="number">3</span></span><br><span class="line">Test4 <span class="number">1</span></span><br><span class="line">Test5 <span class="number">3</span></span><br><span class="line">Test6 <span class="number">1</span></span><br><span class="line"># luajit test.lua</span><br><span class="line">Test1 <span class="number">2</span></span><br><span class="line">Test2 <span class="number">1</span></span><br><span class="line">Test3 <span class="number">1</span></span><br><span class="line">Test4 <span class="number">1</span></span><br><span class="line">Test5 <span class="number">1</span></span><br><span class="line">Test6 <span class="number">1</span></span><br></pre></td></tr></table></figure>
+
+<ul>
+<li><p>这一段的输出结果，就是这么 匪夷所思。请问，你以后还敢在 Lua 的 table 中用 nil 值吗？如果你继续往后面加 nil，你可能会发现点什么。你可能认为你发现的是个规律。但是，你千万不要认为这是个规律，因为这是错误的。</p>
+</li>
+<li><p>不要在 Lua 的 table 中使用 nil 值，如果一个元素要删除，直接 remove，不要用 nil 去代替。</p>
+</li>
+</ul>
+<h1 id="table-concat-table-sep-i-j"><a href="#table-concat-table-sep-i-j" class="headerlink" title="table.concat (table [, sep [, i [, j ] ] ])"></a>table.concat (table [, sep [, i [, j ] ] ])</h1><ul>
+<li>对于元素是 string 或者 number 类型的表 table，返回 table[i]..sep..table[i+1] ··· sep..table[j] 连接成的字符串。填充字符串 sep 默认为空白字符串。起始索引位置 i 默认为 1，结束索引位置 j 默认是 table 的长度。如果 i 大于 j，返回一个空字符串。<figure class="highlight lua"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">local</span> a = &#123;<span class="number">1</span>, <span class="number">3</span>, <span class="number">5</span>, <span class="string">"hello"</span> &#125;</span><br><span class="line"><span class="built_in">print</span>(<span class="built_in">table</span>.<span class="built_in">concat</span>(a))              <span class="comment">-- output: 135hello</span></span><br><span class="line"><span class="built_in">print</span>(<span class="built_in">table</span>.<span class="built_in">concat</span>(a, <span class="string">"|"</span>))         <span class="comment">-- output: 1|3|5|hello</span></span><br><span class="line"><span class="built_in">print</span>(<span class="built_in">table</span>.<span class="built_in">concat</span>(a, <span class="string">" "</span>, <span class="number">4</span>, <span class="number">2</span>))   <span class="comment">-- output:</span></span><br><span class="line"><span class="built_in">print</span>(<span class="built_in">table</span>.<span class="built_in">concat</span>(a, <span class="string">" "</span>, <span class="number">2</span>, <span class="number">4</span>))   <span class="comment">-- output: 3 5 hello</span></span><br></pre></td></tr></table></figure>
+
+</li>
+</ul>
+<h1 id="table-insert-table-pos-value"><a href="#table-insert-table-pos-value" class="headerlink" title="table.insert (table, [pos ,] value)"></a>table.insert (table, [pos ,] value)</h1><ul>
+<li>在（数组型）表 table 的 pos 索引位置插入 value，其它元素向后移动到空的地方。pos 的默认值是表的长度加一，即默认是插在表的最后。<figure class="highlight lua"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">local</span> a = &#123;<span class="number">1</span>, <span class="number">8</span>&#125;             <span class="comment">--a[1] = 1,a[2] = 8</span></span><br><span class="line"><span class="built_in">table</span>.<span class="built_in">insert</span>(a, <span class="number">1</span>, <span class="number">3</span>)   <span class="comment">--在表索引为1处插入3</span></span><br><span class="line"><span class="built_in">print</span>(a[<span class="number">1</span>], a[<span class="number">2</span>], a[<span class="number">3</span>])</span><br><span class="line"><span class="built_in">table</span>.<span class="built_in">insert</span>(a, <span class="number">10</span>)    <span class="comment">--在表的最后插入10</span></span><br><span class="line"><span class="built_in">print</span>(a[<span class="number">1</span>], a[<span class="number">2</span>], a[<span class="number">3</span>], a[<span class="number">4</span>])</span><br><span class="line"></span><br><span class="line"><span class="comment">--&gt;output</span></span><br><span class="line"><span class="number">3</span>   <span class="number">1</span>   <span class="number">8</span></span><br><span class="line"><span class="number">3</span>   <span class="number">1</span>   <span class="number">8</span>   <span class="number">10</span></span><br></pre></td></tr></table></figure>
+
+</li>
+</ul>
+<h1 id="table-maxn-table"><a href="#table-maxn-table" class="headerlink" title="table.maxn (table)"></a>table.maxn (table)</h1><ul>
+<li><p>返回（数组型）表 table 的最大索引编号；如果此表没有正的索引编号，返回 0。</p>
+</li>
+<li><p>当长度省略时，此函数通常需要 O(n) 的时间复杂度来计算 table 的末尾。因此用这个函数省略索引位置的调用形式来作 table 元素的末尾追加，是高代价操作。</p>
+</li>
+</ul>
+<figure class="highlight lua"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">local</span> a = &#123;&#125;</span><br><span class="line">a[<span class="number">-1</span>] = <span class="number">10</span></span><br><span class="line"><span class="built_in">print</span>(<span class="built_in">table</span>.<span class="built_in">maxn</span>(a))</span><br><span class="line">a[<span class="number">5</span>] = <span class="number">10</span></span><br><span class="line"><span class="built_in">print</span>(<span class="built_in">table</span>.<span class="built_in">maxn</span>(a))</span><br><span class="line"></span><br><span class="line"><span class="comment">--&gt;output</span></span><br><span class="line"><span class="number">0</span></span><br><span class="line"><span class="number">5</span></span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>此函数的行为不同于 # 运算符，因为 # 可以返回数组中任意一个 nil 空洞或最后一个 nil 之前的元素索引。当然，该函数的开销相比 # 运算符也会更大一些。</li>
+</ul>
+<h1 id="table-remove-table-pos"><a href="#table-remove-table-pos" class="headerlink" title="table.remove (table [, pos])"></a>table.remove (table [, pos])</h1><ul>
+<li>在表 table 中删除索引为 pos（pos 只能是 number 型）的元素，并返回这个被删除的元素，它后面所有元素的索引值都会减一。pos 的默认值是表的长度，即默认是删除表的最后一个元素。</li>
+</ul>
+<figure class="highlight lua"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">local</span> a = &#123; <span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>, <span class="number">4</span>&#125;</span><br><span class="line"><span class="built_in">print</span>(<span class="built_in">table</span>.<span class="built_in">remove</span>(a, <span class="number">1</span>)) <span class="comment">--删除速索引为1的元素</span></span><br><span class="line"><span class="built_in">print</span>(a[<span class="number">1</span>], a[<span class="number">2</span>], a[<span class="number">3</span>], a[<span class="number">4</span>])</span><br><span class="line"></span><br><span class="line"><span class="built_in">print</span>(<span class="built_in">table</span>.<span class="built_in">remove</span>(a))   <span class="comment">--删除最后一个元素</span></span><br><span class="line"><span class="built_in">print</span>(a[<span class="number">1</span>], a[<span class="number">2</span>], a[<span class="number">3</span>], a[<span class="number">4</span>])</span><br><span class="line"></span><br><span class="line"><span class="comment">--&gt;output</span></span><br><span class="line"><span class="number">1</span></span><br><span class="line"><span class="number">2</span>   <span class="number">3</span>   <span class="number">4</span>   <span class="literal">nil</span></span><br><span class="line"><span class="number">4</span></span><br><span class="line"><span class="number">2</span>   <span class="number">3</span>   <span class="literal">nil</span> <span class="literal">nil</span></span><br></pre></td></tr></table></figure>
+
+<h1 id="table-sort-table-comp"><a href="#table-sort-table-comp" class="headerlink" title="table.sort (table [, comp])"></a>table.sort (table [, comp])</h1><ul>
+<li>按照给定的比较函数 comp 给表 table 排序，也就是从 table[1] 到 table[n]，这里 n 表示 table 的长度。 比较函数有两个参数，如果希望第一个参数排在第二个的前面，就应该返回 true，否则返回 false。 如果比较函数 comp 没有给出，默认从小到大排序。</li>
+</ul>
+<figure class="highlight lua"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">local</span> <span class="function"><span class="keyword">function</span> <span class="title">compare</span><span class="params">(x, y)</span></span> <span class="comment">--从大到小排序</span></span><br><span class="line">   <span class="keyword">return</span> x &gt; y         <span class="comment">--如果第一个参数大于第二个就返回true，否则返回false</span></span><br><span class="line"><span class="keyword">end</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">local</span> a = &#123; <span class="number">1</span>, <span class="number">7</span>, <span class="number">3</span>, <span class="number">4</span>, <span class="number">25</span>&#125;</span><br><span class="line"><span class="built_in">table</span>.<span class="built_in">sort</span>(a)           <span class="comment">--默认从小到大排序</span></span><br><span class="line"><span class="built_in">print</span>(a[<span class="number">1</span>], a[<span class="number">2</span>], a[<span class="number">3</span>], a[<span class="number">4</span>], a[<span class="number">5</span>])</span><br><span class="line"><span class="built_in">table</span>.<span class="built_in">sort</span>(a, compare) <span class="comment">--使用比较函数进行排序</span></span><br><span class="line"><span class="built_in">print</span>(a[<span class="number">1</span>], a[<span class="number">2</span>], a[<span class="number">3</span>], a[<span class="number">4</span>], a[<span class="number">5</span>])</span><br><span class="line"></span><br><span class="line"><span class="comment">--&gt;output</span></span><br><span class="line"><span class="number">1</span>   <span class="number">3</span>   <span class="number">4</span>   <span class="number">7</span>   <span class="number">25</span></span><br><span class="line"><span class="number">25</span>  <span class="number">7</span>   <span class="number">4</span>   <span class="number">3</span>   <span class="number">1</span></span><br></pre></td></tr></table></figure>
+
+<h1 id="table-其他非常有用的函数"><a href="#table-其他非常有用的函数" class="headerlink" title="table 其他非常有用的函数"></a>table 其他非常有用的函数</h1><ul>
+<li>LuaJIT 2.1 新增加的 table.new 和 table.clear 函数是非常有用的。前者主要用来预分配 Lua table 空间，后者主要用来高效的释放 table 空间，并且它们都是可以被 JIT 编译的。具体可以参考一下 OpenResty 捆绑的 lua-resty-* 库，里面有些实例可以作为参考。</li>
+</ul>
+
+      
+    </div>
+    <div class="article-footer">
+      <blockquote class="mt-2x">
+  <ul class="post-copyright list-unstyled">
+    
+    <li class="post-copyright-link hidden-xs">
+      <strong>本文链接：</strong>
+      <a href="https://overtalk.site/2018/11/01/lua-table/" title="Lua - table库" target="_blank" rel="external">https://overtalk.site/2018/11/01/lua-table/</a>
+    </li>
+    
+    <li class="post-copyright-license">
+      <strong>版权声明： </strong> 本博客所有文章除特别声明外，均采用 <a href="http://creativecommons.org/licenses/by/4.0/deed.zh" target="_blank" rel="external">CC BY 4.0 CN协议</a> 许可协议。转载请注明出处！
+    </li>
+  </ul>
+</blockquote>
+
+
+<div class="panel panel-default panel-badger">
+  <div class="panel-body">
+    <figure class="media">
+      <div class="media-left">
+        <a href="https://github.com/overtalk" target="_blank" class="img-burn thumb-sm visible-lg">
+          <img src="/images/avatar.png" class="img-rounded w-full" alt="">
+        </a>
+      </div>
+      <div class="media-body">
+        <h3 class="media-heading"><a href="https://github.com/overtalk" target="_blank"><span class="text-dark">QinHan</span><small class="ml-1x">Game Developer &amp; Designer</small></a></h3>
+        <div>当你发现自己的才华撑不起野心时，就请安静下来学习吧！</div>
+      </div>
+    </figure>
+  </div>
+</div>
+
+
+    </div>
+  </article>
+  
+    
+  <section id="comments">
+  	
+           
+    
+  </section>
+
+
+  
+</div>
+
+  <nav class="bar bar-footer clearfix" data-stick-bottom>
+  <div class="bar-inner">
+  
+  <ul class="pager pull-left">
+    
+    <li class="prev">
+      <a href="/2018/11/01/lua-math/" title="Lua - 数学库"><i class="icon icon-angle-left" aria-hidden="true"></i><span>&nbsp;&nbsp;上一篇</span></a>
+    </li>
+    
+    
+    <li class="next">
+      <a href="/2018/11/01/lua-module/" title="Lua - module"><span>下一篇&nbsp;&nbsp;</span><i class="icon icon-angle-right" aria-hidden="true"></i></a>
+    </li>
+    
+    
+  </ul>
+  
+  
+  <!-- Button trigger modal -->
+  <button type="button" class="btn btn-fancy btn-donate pop-onhover bg-gradient-warning" data-toggle="modal" data-target="#donateModal"><span>赏</span></button>
+  <!-- <div class="wave-icon wave-icon-danger btn-donate" data-toggle="modal" data-target="#donateModal">
+    <div class="wave-circle"><span class="icon"><i class="icon icon-bill"></i></span></div>
+  </div> -->
+  
+  
+  <div class="bar-right">
+    
+    <div class="share-component" data-sites="weibo,qq,wechat,facebook,twitter" data-mobile-sites="weibo,qq,qzone"></div>
+    
+  </div>
+  </div>
+</nav>
+  
+<!-- Modal -->
+<div class="modal modal-center modal-small modal-xs-full fade" id="donateModal" tabindex="-1" role="dialog">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content donate">
+      <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+      <div class="modal-body">
+        <div class="donate-box">
+          <div class="donate-head">
+            <p>感谢您的支持，我会继续努力的!</p>
+          </div>
+          <div class="tab-content">
+            <div role="tabpanel" class="tab-pane fade active in" id="alipay">
+              <div class="donate-payimg">
+                <img src="/images/donate/alipayimg.png" alt="扫码支持" title="扫一扫" />
+              </div>
+              <p class="text-muted mv">喜欢就收藏，疼爱就打赏！</p>
+              <p class="text-grey">支付宝扫一扫</p>
+            </div>
+            <div role="tabpanel" class="tab-pane fade" id="wechatpay">
+              <div class="donate-payimg">
+                <img src="/images/donate/wechatpayimg.png" alt="扫码支持" title="扫一扫" />
+              </div>
+              <p class="text-muted mv">喜欢就收藏，疼爱就打赏！</p>
+              <p class="text-grey">微信扫一扫</p>
+            </div>
+          </div>
+          <div class="donate-footer">
+            <ul class="nav nav-tabs nav-justified" role="tablist">
+              <li role="presentation" class="active">
+                <a href="#alipay" id="alipay-tab" role="tab" data-toggle="tab" aria-controls="alipay" aria-expanded="true"><i class="icon icon-alipay"></i> 支付宝</a>
+              </li>
+              <li role="presentation" class="">
+                <a href="#wechatpay" role="tab" id="wechatpay-tab" data-toggle="tab" aria-controls="wechatpay" aria-expanded="false"><i class="icon icon-wepay"></i> 微信支付</a>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+
+</main>
+
+  <footer class="footer" itemscope itemtype="http://schema.org/WPFooter">
+	
+	
+    <ul class="social-links">
+    	
+        <li><a href="https://github.com/overtalk" target="_blank" title="Github" data-toggle=tooltip data-placement=top><i class="icon icon-github"></i></a></li>
+        
+        <li><a href="/atom.xml" target="_blank" title="Rss" data-toggle=tooltip data-placement=top><i class="icon icon-rss"></i></a></li>
+        
+    </ul>
+
+    <div class="copyright">
+    	
+        <div class="publishby">
+        	Powered by <a href="https://hexo.io/" target="_blank"> Hexo </a>base on <a href="https://github.com/cofess/hexo-theme-pure" target="_blank">pure</a>.
+        </div>
+    </div>
+</footer>
+  <script src="//cdn.jsdelivr.net/npm/jquery@1.12.4/dist/jquery.min.js"></script>
+<script>
+window.jQuery || document.write('<script src="js/jquery.min.js"><\/script>')
+</script>
+<script src="/js/plugin.min.js"></script>
+<script src="/js/application.js"></script>
+
+    <script>
+(function (window) {
+    var INSIGHT_CONFIG = {
+        TRANSLATION: {
+            POSTS: '文章',
+            PAGES: '页面',
+            CATEGORIES: '分类',
+            TAGS: '标签',
+            UNTITLED: '(未命名)',
+        },
+        ROOT_URL: '/',
+        CONTENT_URL: '/content.json',
+    };
+    window.INSIGHT_CONFIG = INSIGHT_CONFIG;
+})(window);
+</script>
+<script src="/js/insight.js"></script>
+
+
+
+
+
+   
+<script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+
+
+
+   
+    
+  <!-- <link rel="stylesheet" href="https://unpkg.com/gitalk/dist/gitalk.css"> -->
+  <script src="//cdn.jsdelivr.net/npm/gitalk@1.4.0/dist/gitalk.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/blueimp-md5@2.10.0/js/md5.min.js"></script>
+  <script type="text/javascript">
+  var gitalk = new Gitalk({
+    clientID: '8b37930d2d91b16067d3',
+    clientSecret: '3e1cf0374a8d938b6e1d1c8239ff068ac5de5c96',
+    repo: 'overtalk.github.io',
+    owner: 'overtalk',
+    admin: ['overtalk'],
+    id: md5(location.pathname),
+    distractionFreeMode: true
+  })
+  gitalk.render('comments')
+  </script>
+
+      
+
+
+
+
+
+
+
+</body>
+</html>

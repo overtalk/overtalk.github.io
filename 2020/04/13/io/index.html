@@ -1,0 +1,822 @@
+<!DOCTYPE html>
+<html lang=zh>
+<head>
+  <meta charset="utf-8">
+  
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no, minimal-ui">
+  <meta name="renderer" content="webkit">
+  <meta http-equiv="Cache-Control" content="no-transform" />
+  <meta http-equiv="Cache-Control" content="no-siteapp" />
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <meta name="format-detection" content="telephone=no,email=no,adress=no">
+  <!-- Color theme for statusbar -->
+  <meta name="theme-color" content="#000000" />
+  <!-- 强制页面在当前窗口以独立页面显示,防止别人在框架里调用页面 -->
+  <meta http-equiv="window-target" content="_top" />
+  
+  
+  <title>彻底弄懂IO这件事情 - 从5种io模型开始 | Overtalk</title>
+  <meta name="description" content="新人菜鸟，尝试讲清楚io这件事情 主要包括 bio，nio，select，epoll 可能也会包含一些 mmap，零拷贝 等一些系统调用 本文中的一些例子主要以 linux + 网络io 为主  闲扯淡 为啥要彻底弄懂IO这件事情？ 面试的时候问：redis网络模型是什么啊？nginx网络模型是什么啊？ epoll 啊，这就需要牵扯到IO的事情了 其实IO这就是就是一个成本的问题，因为用户进程不">
+<meta name="keywords" content="linux,io">
+<meta property="og:type" content="article">
+<meta property="og:title" content="彻底弄懂IO这件事情 - 从5种io模型开始">
+<meta property="og:url" content="https:&#x2F;&#x2F;overtalk.site&#x2F;2020&#x2F;04&#x2F;13&#x2F;io&#x2F;index.html">
+<meta property="og:site_name" content="QinHan&#39;s Site">
+<meta property="og:description" content="新人菜鸟，尝试讲清楚io这件事情 主要包括 bio，nio，select，epoll 可能也会包含一些 mmap，零拷贝 等一些系统调用 本文中的一些例子主要以 linux + 网络io 为主  闲扯淡 为啥要彻底弄懂IO这件事情？ 面试的时候问：redis网络模型是什么啊？nginx网络模型是什么啊？ epoll 啊，这就需要牵扯到IO的事情了 其实IO这就是就是一个成本的问题，因为用户进程不">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:image" content="https:&#x2F;&#x2F;overtalk.site&#x2F;images&#x2F;posts&#x2F;linux-io&#x2F;5-io-model.png">
+<meta property="og:image" content="https:&#x2F;&#x2F;overtalk.site&#x2F;images&#x2F;posts&#x2F;io&#x2F;bio.png">
+<meta property="og:updated_time" content="2022-07-19T07:53:37.893Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https:&#x2F;&#x2F;overtalk.site&#x2F;images&#x2F;posts&#x2F;linux-io&#x2F;5-io-model.png">
+  <!-- Canonical links -->
+  <link rel="canonical" href="https://overtalk.site/2020/04/13/io/index.html">
+  
+    <link rel="alternate" href="/atom.xml" title="QinHan&#39;s Site" type="application/atom+xml">
+  
+  
+    <link rel="icon" href="/favicon.png" type="image/x-icon">
+  
+  <link rel="stylesheet" href="/css/style.css">
+  
+  
+  
+  
+    <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/gitalk@1.4.0/dist/gitalk.min.css">
+  
+</head>
+
+
+<body class="main-center theme-black" itemscope itemtype="http://schema.org/WebPage">
+  <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+  <div class="slimContent">
+    <div class="navbar-header">
+      
+      
+      <div class="profile-block text-center">
+        <a id="avatar" href="https://github.com/overtalk" target="_blank">
+          <img class="img-circle img-rotate" src="/images/avatar.png" width="200" height="200">
+        </a>
+        <h2 id="name" class="hidden-xs hidden-sm">QinHan</h2>
+        <h3 id="title" class="hidden-xs hidden-sm hidden-md">Game Developer &amp; Designer</h3>
+        <small id="location" class="text-muted hidden-xs hidden-sm"><i class="icon icon-map-marker"></i> Shanghai, China</small>
+      </div>
+      
+      <div class="search" id="search-form-wrap">
+
+    <form class="search-form sidebar-form">
+        <div class="input-group">
+            <input type="text" class="search-form-input form-control" placeholder="搜索" />
+            <span class="input-group-btn">
+                <button type="submit" class="search-form-submit btn btn-flat" onclick="return false;"><i class="icon icon-search"></i></button>
+            </span>
+        </div>
+    </form>
+    <div class="ins-search">
+  <div class="ins-search-mask"></div>
+  <div class="ins-search-container">
+    <div class="ins-input-wrapper">
+      <input type="text" class="ins-search-input" placeholder="想要查找什么..." x-webkit-speech />
+      <button type="button" class="close ins-close ins-selectable" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button>
+    </div>
+    <div class="ins-section-wrapper">
+      <div class="ins-section-container"></div>
+    </div>
+  </div>
+</div>
+
+
+</div>
+      <button class="navbar-toggle collapsed" type="button" data-toggle="collapse" data-target="#main-navbar" aria-controls="main-navbar" aria-expanded="false">
+        <span class="sr-only">Toggle navigation</span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+    </div>
+    <nav id="main-navbar" class="collapse navbar-collapse" itemscope itemtype="http://schema.org/SiteNavigationElement" role="navigation">
+      <ul class="nav navbar-nav main-nav menu-highlight">
+        
+        
+        <li class="menu-item menu-item-home">
+          <a href="/.">
+            
+            <i class="icon icon-home-fill"></i>
+            
+            <span class="menu-title">首页</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives">
+            
+            <i class="icon icon-archives-fill"></i>
+            
+            <span class="menu-title">归档</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories">
+            
+            <i class="icon icon-folder"></i>
+            
+            <span class="menu-title">分类</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags">
+            
+            <i class="icon icon-tags"></i>
+            
+            <span class="menu-title">标签</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-repository">
+          <a href="/repository">
+            
+            <i class="icon icon-project"></i>
+            
+            <span class="menu-title">项目</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-links">
+          <a href="/links">
+            
+            <i class="icon icon-friendship"></i>
+            
+            <span class="menu-title">友链</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about">
+            
+            <i class="icon icon-cup-fill"></i>
+            
+            <span class="menu-title">关于</span>
+          </a>
+        </li>
+        
+      </ul>
+      
+	
+    <ul class="social-links">
+    	
+        <li><a href="https://github.com/overtalk" target="_blank" title="Github" data-toggle=tooltip data-placement=top><i class="icon icon-github"></i></a></li>
+        
+        <li><a href="/atom.xml" target="_blank" title="Rss" data-toggle=tooltip data-placement=top><i class="icon icon-rss"></i></a></li>
+        
+    </ul>
+
+    </nav>
+  </div>
+</header>
+
+  
+    <aside class="sidebar" itemscope itemtype="http://schema.org/WPSideBar">
+  <div class="slimContent">
+    
+      <div class="widget">
+    <h3 class="widget-title">公告</h3>
+    <div class="widget-body">
+        <div id="board">
+            <div class="content">
+                <p>欢迎交流与分享经验!</p><p>邮箱：qinhan_shu@163.com</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">分类</h3>
+    <div class="widget-body">
+      <ul class="category-list"><li class="category-list-item"><a class="category-list-link" href="/categories/fragment/">fragment</a><span class="category-list-count">3</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/interview/">interview</a><span class="category-list-count">4</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/jewellery/">jewellery</a><span class="category-list-count">4</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/linux/">linux</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/minio/">minio</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/mongo/">mongo</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/rtc/">rtc</a><span class="category-list-count">3</span><ul class="category-list-child"><li class="category-list-item"><a class="category-list-link" href="/categories/rtc/book/">book</a><span class="category-list-count">1</span><ul class="category-list-child"><li class="category-list-item"><a class="category-list-link" href="/categories/rtc/book/freeswitch/">freeswitch</a><span class="category-list-count">1</span></li></ul></li></ul></li><li class="category-list-item"><a class="category-list-link" href="/categories/%E7%BC%96%E7%A8%8B/">编程</a><span class="category-list-count">141</span><ul class="category-list-child"><li class="category-list-item"><a class="category-list-link" href="/categories/%E7%BC%96%E7%A8%8B/%E6%B8%B8%E6%88%8F/">游戏</a><span class="category-list-count">1</span></li></ul></li><li class="category-list-item"><a class="category-list-link" href="/categories/%E9%9A%8F%E7%AC%94/">随笔</a><span class="category-list-count">2</span></li></ul>
+    </div>
+  </div>
+
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">标签</h3>
+    <div class="widget-body">
+      <ul class="tag-list" itemprop="keywords"><li class="tag-list-item"><a class="tag-list-link" href="/tags/CI-CD/" rel="tag">CI/CD</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Docker/" rel="tag">Docker</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Golang/" rel="tag">Golang</a><span class="tag-list-count">35</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Nagle/" rel="tag">Nagle</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Network/" rel="tag">Network</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Redis/" rel="tag">Redis</a><span class="tag-list-count">6</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Redis%E5%A4%87%E4%BB%BD/" rel="tag">Redis备份</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Shadowsocks/" rel="tag">Shadowsocks</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Socks5/" rel="tag">Socks5</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/algorithm/" rel="tag">algorithm</a><span class="tag-list-count">8</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/clion/" rel="tag">clion</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/cpp/" rel="tag">cpp</a><span class="tag-list-count">50</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/docker/" rel="tag">docker</a><span class="tag-list-count">3</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/dw/" rel="tag">dw</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/endian/" rel="tag">endian</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/epoll/" rel="tag">epoll</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/freeswitch/" rel="tag">freeswitch</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/git/" rel="tag">git</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/gpg/" rel="tag">gpg</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/interview/" rel="tag">interview</a><span class="tag-list-count">4</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/io/" rel="tag">io</a><span class="tag-list-count">3</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/ip/" rel="tag">ip</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/iptables/" rel="tag">iptables</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/k8s/" rel="tag">k8s</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/kernal/" rel="tag">kernal</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/linux/" rel="tag">linux</a><span class="tag-list-count">8</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/loadbalance/" rel="tag">loadbalance</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/lock-free/" rel="tag">lock-free</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/lua/" rel="tag">lua</a><span class="tag-list-count">9</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/mac/" rel="tag">mac</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/mongo/" rel="tag">mongo</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/mysql/" rel="tag">mysql</a><span class="tag-list-count">3</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/network/" rel="tag">network</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/python/" rel="tag">python</a><span class="tag-list-count">3</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/recastnavigation/" rel="tag">recastnavigation</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/regex/" rel="tag">regex</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/rtc/" rel="tag">rtc</a><span class="tag-list-count">3</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/service-mesh/" rel="tag">service mesh</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/shadowsocks/" rel="tag">shadowsocks</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/shell/" rel="tag">shell</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/ssh/" rel="tag">ssh</a><span class="tag-list-count">3</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/systemcall/" rel="tag">systemcall</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/systemd/" rel="tag">systemd</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/tcp/" rel="tag">tcp</a><span class="tag-list-count">6</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E4%B8%AA%E4%BA%BA%E7%BD%91%E7%9B%98/" rel="tag">个人网盘</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%B9%B6%E5%8F%91/" rel="tag">并发</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E6%B8%B8%E6%88%8F/" rel="tag">游戏</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E9%9A%8F%E7%AC%94/" rel="tag">随笔</a><span class="tag-list-count">2</span></li></ul>
+    </div>
+  </div>
+
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">标签云</h3>
+    <div class="widget-body tagcloud">
+      <a href="/tags/CI-CD/" style="font-size: 13px;">CI/CD</a> <a href="/tags/Docker/" style="font-size: 13px;">Docker</a> <a href="/tags/Golang/" style="font-size: 13.88px;">Golang</a> <a href="/tags/Nagle/" style="font-size: 13px;">Nagle</a> <a href="/tags/Network/" style="font-size: 13px;">Network</a> <a href="/tags/Redis/" style="font-size: 13.5px;">Redis</a> <a href="/tags/Redis%E5%A4%87%E4%BB%BD/" style="font-size: 13px;">Redis备份</a> <a href="/tags/Shadowsocks/" style="font-size: 13px;">Shadowsocks</a> <a href="/tags/Socks5/" style="font-size: 13px;">Socks5</a> <a href="/tags/algorithm/" style="font-size: 13.63px;">algorithm</a> <a href="/tags/clion/" style="font-size: 13px;">clion</a> <a href="/tags/cpp/" style="font-size: 14px;">cpp</a> <a href="/tags/docker/" style="font-size: 13.25px;">docker</a> <a href="/tags/dw/" style="font-size: 13px;">dw</a> <a href="/tags/endian/" style="font-size: 13px;">endian</a> <a href="/tags/epoll/" style="font-size: 13px;">epoll</a> <a href="/tags/freeswitch/" style="font-size: 13px;">freeswitch</a> <a href="/tags/git/" style="font-size: 13px;">git</a> <a href="/tags/gpg/" style="font-size: 13px;">gpg</a> <a href="/tags/interview/" style="font-size: 13.38px;">interview</a> <a href="/tags/io/" style="font-size: 13.25px;">io</a> <a href="/tags/ip/" style="font-size: 13.13px;">ip</a> <a href="/tags/iptables/" style="font-size: 13px;">iptables</a> <a href="/tags/k8s/" style="font-size: 13px;">k8s</a> <a href="/tags/kernal/" style="font-size: 13px;">kernal</a> <a href="/tags/linux/" style="font-size: 13.63px;">linux</a> <a href="/tags/loadbalance/" style="font-size: 13.13px;">loadbalance</a> <a href="/tags/lock-free/" style="font-size: 13px;">lock-free</a> <a href="/tags/lua/" style="font-size: 13.75px;">lua</a> <a href="/tags/mac/" style="font-size: 13.13px;">mac</a> <a href="/tags/mongo/" style="font-size: 13px;">mongo</a> <a href="/tags/mysql/" style="font-size: 13.25px;">mysql</a> <a href="/tags/network/" style="font-size: 13px;">network</a> <a href="/tags/python/" style="font-size: 13.25px;">python</a> <a href="/tags/recastnavigation/" style="font-size: 13px;">recastnavigation</a> <a href="/tags/regex/" style="font-size: 13px;">regex</a> <a href="/tags/rtc/" style="font-size: 13.25px;">rtc</a> <a href="/tags/service-mesh/" style="font-size: 13px;">service mesh</a> <a href="/tags/shadowsocks/" style="font-size: 13px;">shadowsocks</a> <a href="/tags/shell/" style="font-size: 13.13px;">shell</a> <a href="/tags/ssh/" style="font-size: 13.25px;">ssh</a> <a href="/tags/systemcall/" style="font-size: 13.13px;">systemcall</a> <a href="/tags/systemd/" style="font-size: 13px;">systemd</a> <a href="/tags/tcp/" style="font-size: 13.5px;">tcp</a> <a href="/tags/%E4%B8%AA%E4%BA%BA%E7%BD%91%E7%9B%98/" style="font-size: 13px;">个人网盘</a> <a href="/tags/%E5%B9%B6%E5%8F%91/" style="font-size: 13px;">并发</a> <a href="/tags/%E6%B8%B8%E6%88%8F/" style="font-size: 13px;">游戏</a> <a href="/tags/%E9%9A%8F%E7%AC%94/" style="font-size: 13.13px;">随笔</a>
+    </div>
+  </div>
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">归档</h3>
+    <div class="widget-body">
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2022/07/">七月 2022</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/02/">二月 2021</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/01/">一月 2021</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2020/11/">十一月 2020</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2020/10/">十月 2020</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2020/08/">八月 2020</a><span class="archive-list-count">2</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2020/07/">七月 2020</a><span class="archive-list-count">15</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2020/06/">六月 2020</a><span class="archive-list-count">3</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2020/05/">五月 2020</a><span class="archive-list-count">6</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2020/04/">四月 2020</a><span class="archive-list-count">14</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2020/03/">三月 2020</a><span class="archive-list-count">16</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2020/02/">二月 2020</a><span class="archive-list-count">15</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2020/01/">一月 2020</a><span class="archive-list-count">13</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2019/12/">十二月 2019</a><span class="archive-list-count">20</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2019/11/">十一月 2019</a><span class="archive-list-count">6</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2019/10/">十月 2019</a><span class="archive-list-count">25</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2019/09/">九月 2019</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2019/08/">八月 2019</a><span class="archive-list-count">2</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2019/07/">七月 2019</a><span class="archive-list-count">9</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2019/04/">四月 2019</a><span class="archive-list-count">2</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2019/03/">三月 2019</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2018/11/">十一月 2018</a><span class="archive-list-count">9</span></li></ul>
+    </div>
+  </div>
+
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">最新文章</h3>
+    <div class="widget-body">
+      <ul class="recent-post-list list-unstyled no-thumbnail">
+        
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                
+              </p>
+              <p class="item-title">
+                <a href="/2022/07/19/bitmap/" class="title">bitmap</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2022-07-19T15:47:57.000Z" itemprop="datePublished">2022-07-19</time>
+              </p>
+            </div>
+          </li>
+          
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                <a class="category-link" href="/categories/%E7%BC%96%E7%A8%8B/">编程</a>
+              </p>
+              <p class="item-title">
+                <a href="/2021/02/02/recast-1/" class="title">导航网格-基础概念&amp;数据结构</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2021-02-02T16:38:43.000Z" itemprop="datePublished">2021-02-02</time>
+              </p>
+            </div>
+          </li>
+          
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                <a class="category-link" href="/categories/mongo/">mongo</a>
+              </p>
+              <p class="item-title">
+                <a href="/2021/01/19/mongo-metas/" class="title">mongo 杂记</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2021-01-19T10:22:54.000Z" itemprop="datePublished">2021-01-19</time>
+              </p>
+            </div>
+          </li>
+          
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                <a class="category-link" href="/categories/%E7%BC%96%E7%A8%8B/">编程</a>
+              </p>
+              <p class="item-title">
+                <a href="/2020/11/08/py-attribute/" class="title">Python 如何查找属性</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2020-11-08T15:21:28.000Z" itemprop="datePublished">2020-11-08</time>
+              </p>
+            </div>
+          </li>
+          
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                <a class="category-link" href="/categories/%E7%BC%96%E7%A8%8B/">编程</a>
+              </p>
+              <p class="item-title">
+                <a href="/2020/10/10/network-tcp-optimization/" class="title">Linux TCP/IP 性能调优</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2020-10-10T03:51:46.000Z" itemprop="datePublished">2020-10-10</time>
+              </p>
+            </div>
+          </li>
+          
+      </ul>
+    </div>
+  </div>
+  
+
+    
+  </div>
+</aside>
+
+  
+  
+<main class="main" role="main">
+  <div class="content">
+  <article id="post-io" class="article article-type-post" itemscope itemtype="http://schema.org/BlogPosting">
+    
+    <div class="article-header">
+      
+        
+  
+    <h1 class="article-title" itemprop="name">
+      彻底弄懂IO这件事情 - 从5种io模型开始
+    </h1>
+  
+
+      
+      <div class="article-meta">
+        <span class="article-date">
+    <i class="icon icon-calendar-check"></i>
+	<a href="/2020/04/13/io/" class="article-date">
+	  <time datetime="2020-04-13T09:24:29.000Z" itemprop="datePublished">2020-04-13</time>
+	</a>
+</span>
+        
+  <span class="article-category">
+    <i class="icon icon-folder"></i>
+    <a class="article-category-link" href="/categories/jewellery/">jewellery</a>
+  </span>
+
+        
+  <span class="article-tag">
+    <i class="icon icon-tags"></i>
+	<a class="article-tag-link" href="/tags/io/" rel="tag">io</a>, <a class="article-tag-link" href="/tags/linux/" rel="tag">linux</a>
+  </span>
+
+
+        
+	<span class="article-read hidden-xs">
+	    <i class="icon icon-eye-fill" aria-hidden="true"></i>
+	    <span id="busuanzi_container_page_pv">
+			<span id="busuanzi_value_page_pv">0</span>
+		</span>
+	</span>
+
+
+        <span class="post-comment"><i class="icon icon-comment"></i> <a href="/2020/04/13/io/#comments" class="article-comment-link">评论</a></span>
+        
+      </div>
+    </div>
+    <div class="article-entry marked-body" itemprop="articleBody">
+      
+        <blockquote>
+<p>新人菜鸟，尝试讲清楚io这件事情</p>
+<p>主要包括 bio，nio，select，epoll</p>
+<p>可能也会包含一些 mmap，零拷贝 等一些系统调用</p>
+<p>本文中的一些例子主要以 <code>linux</code> + <code>网络io</code> 为主</p>
+</blockquote>
+<h1 id="闲扯淡"><a href="#闲扯淡" class="headerlink" title="闲扯淡"></a>闲扯淡</h1><ul>
+<li>为啥要彻底弄懂IO这件事情？</li>
+<li>面试的时候问：redis网络模型是什么啊？nginx网络模型是什么啊？</li>
+<li>epoll 啊，这就需要牵扯到IO的事情了</li>
+<li>其实IO这就是就是一个成本的问题，因为用户进程不能直接操作硬件，无法直接从网卡读取数据，需要走 kernel 这一层，必须通过 systemcall（软中断），作用在 cpu 上</li>
+<li>让kernel帮我们取到硬件上的数据，而这个操作就是成本所在，如何减少这一步的消耗，成为了网络吞吐的一个关键点，有关IO技术的发展，也都是基于这一个出发点的</li>
+</ul>
+<h1 id="操作系统的预备知识"><a href="#操作系统的预备知识" class="headerlink" title="操作系统的预备知识"></a>操作系统的预备知识</h1><ul>
+<li>有关这个部分的知识请看我的另外一篇文章<a href="https://overtalk.site/2020/03/16/linux-status/">用户态 内核态</a></li>
+<li>我在这儿把重点列一下<ul>
+<li>操作系统启动之后的第一个进程是 <code>kernel</code> (操作系统内核)<ul>
+<li><code>kernel</code> 会注册 GDT</li>
+</ul>
+</li>
+<li><code>kernel</code> 运行在 <code>Range0</code> 级别，用户进程运行在 <code>Range3</code> 级别</li>
+<li>内核 控制着计算机硬件资源（eg：磁盘，网卡）</li>
+<li>用户进程需要进行 磁盘读写、网络通信等io事件的时候需要通过系统调用来实现，这个时候进程从 <code>Ring3</code> 切换到 <code>Ring0</code> 级别，完成相应的操作之后再切回 <code>Ring3</code></li>
+<li>除去上面说说的 io 事件需要进行 <code>用户态</code> &amp; <code>内核态</code> 的切换，例如申请内存之类的也是需要的</li>
+</ul>
+</li>
+</ul>
+<h1 id="服务器架构图（无论什么语言）"><a href="#服务器架构图（无论什么语言）" class="headerlink" title="服务器架构图（无论什么语言）"></a>服务器架构图（无论什么语言）</h1><ol>
+<li>系统调用 socket 得到一个文件描述符fd5</li>
+<li>系统调用 bind 一个端口</li>
+<li>系统调用 listen 文件描述符fd5</li>
+<li>系统调用 accept(阻塞） fd5 接受连接，返回一个新的文件描述符 fd6，代表与客户端的连接</li>
+<li>系统调用 read/rerecvfrom fd6 读取数据</li>
+</ol>
+<h1 id="五种-IO-模型"><a href="#五种-IO-模型" class="headerlink" title="五种 IO 模型"></a>五种 IO 模型</h1><ul>
+<li><p>在神作《UNIX 网络编程》里，总结归纳了 5 种 I/O 模型，包括同步和异步 I/O：</p>
+<ul>
+<li>阻塞 I/O (Blocking I/O)</li>
+<li>非阻塞 I/O (Nonblocking I/O)</li>
+<li>I/O 多路复用 (I/O multiplexing)</li>
+<li>信号驱动 I/O (Signal driven I/O)</li>
+<li>异步 I/O (Asynchronous I/O)</li>
+</ul>
+</li>
+<li><p>操作系统上的 I/O 是用户空间和内核空间的数据交互，因此 I/O 操作通常包含以下两个步骤：</p>
+<ol>
+<li>等待网络数据到达网卡(读就绪)/等待网卡可写(写就绪) –&gt; 读取/写入到内核缓冲区</li>
+<li>从内核缓冲区复制数据 –&gt; 用户空间(读)/从用户空间复制数据 -&gt; 内核缓冲区(写)</li>
+</ol>
+</li>
+<li><p>而判定一个 I/O 模型是同步还是异步，主要看第二步：数据在用户和内核空间之间复制的时候是不是会阻塞当前进程，如果会，则是同步 I/O，否则，就是异步 I/O。基于这个原则，这 5 种 I/O 模型中只有一种异步 I/O 模型：Asynchronous I/O，其余都是同步 I/O 模型。</p>
+</li>
+<li><p>这 5 种 I/O 模型的对比如下：<br><img src="/images/posts/linux-io/5-io-model.png" alt="五个I/O模型比较"></p>
+</li>
+</ul>
+<h1 id="Bio"><a href="#Bio" class="headerlink" title="Bio"></a>Bio</h1><ul>
+<li><p>block io</p>
+</li>
+<li><p>同步阻塞I/O模式，数据的读取写入必须阻塞在一个线程内等待其完成。<br><img src="/images/posts/io/bio.png" alt="Bio"> </p>
+</li>
+<li><p>采用 BIO 通信模型 的服务端，通常由一个独立的 Acceptor 线程负责监听客户端的连接。我们一般通过在while(true) 循环中服务端会调用 accept() 方法等待接收客户端的连接的方式监听请求，请求一旦接收到一个连接请求，就可以建立通信套接字在这个通信套接字上进行读写操作，此时不能再接收其他客户端连接请求，只能等待同当前连接的客户端的操作执行完成， 不过可以通过<code>多线程</code>来支持多个客户端的连接，如上图所示。</p>
+</li>
+</ul>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">// 新建socket</span><br><span class="line">socket = new Socket();</span><br><span class="line"><span class="keyword">for</span> &#123;</span><br><span class="line">    // socket 监听连接</span><br><span class="line">    conn = socket.accept();</span><br><span class="line"></span><br><span class="line">    // 单独的线程去处理这个连接</span><br><span class="line">    go <span class="function"><span class="title">func</span></span>() &#123;</span><br><span class="line">        <span class="keyword">for</span> &#123;</span><br><span class="line">            data = conn.read();</span><br><span class="line">            // logic</span><br><span class="line">            conn.write(ret_data);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="Bio-中的问题？"><a href="#Bio-中的问题？" class="headerlink" title="Bio 中的问题？"></a>Bio 中的问题？</h2><ol>
+<li>线程数量太多，创建线程也需要走系统调用clone出来，走软中断，系统调用多</li>
+<li>线程消耗计算机资源：线程栈是独立的，堆是共享的</li>
+<li>CPU在某个时间点只可以有一个线程执行，线程多的话会造成频繁切换</li>
+</ol>
+<h2 id="Bio-如何优化？"><a href="#Bio-如何优化？" class="headerlink" title="Bio 如何优化？"></a>Bio 如何优化？</h2><ul>
+<li>总的来说，bio模型中就是因为 socket 是阻塞的模式，导致需要多线程去解决</li>
+<li>系统调用 socket 也可以设置成 NONBLOCK（每次系统调用不阻塞，有数据返回数据，没数据直接返回）</li>
+<li>这就有了后面的nio，一个线程就可以解决n多客户端的连接问题</li>
+</ul>
+<h1 id="Nio"><a href="#Nio" class="headerlink" title="Nio"></a>Nio</h1><ul>
+<li>有人称它为 <code>new io</code>, 也有人称为 <code>non-block io</code></li>
+<li>一种同步非阻塞的I/O模型</li>
+<li>不用开设很多线程，是对 bio 的优化</li>
+</ul>
+<h2 id="nio-的问题是什么？"><a href="#nio-的问题是什么？" class="headerlink" title="nio 的问题是什么？"></a>nio 的问题是什么？</h2><ol>
+<li><code>C10K/C100K 问题</code> ：很多客户端连接时候的问题，如果有1w个客户端，每次循环会依次去查询这1w个socket是否有数据</li>
+<li>每次循环会有 O(n) 级别的系统调用（SC），但是可能只有 10 个连接中有数据，大量的系统调用，而且大部分都是无数据的</li>
+</ol>
+<h2 id="nio-如何优化？"><a href="#nio-如何优化？" class="headerlink" title="nio 如何优化？"></a>nio 如何优化？</h2><ul>
+<li>比如 n 个连接中有 m 个 socket 有数据，将原本 O(n) 级别的系统调用降低到 O(m) 级别？</li>
+<li>系统内核增加了一个系统调用 <code>select</code></li>
+</ul>
+<h1 id="Select"><a href="#Select" class="headerlink" title="Select"></a>Select</h1><ul>
+<li><p>多路复用器（多条路/多个连接 复用了同一个系统调用）</p>
+</li>
+<li><p>同步模型 ： 多路复用器只是返回一个fd状态，具体的读/写还是得进程自己去操作，所以说是同步的</p>
+</li>
+<li><p>该系统调用允许程序监控一个/多个文件描述符，直到一个/多个文件描述符变成可用状态</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">select(<span class="keyword">int</span> nfds, fd_set *readfds, fd_set *writefds, fd_set *exceptfds, <span class="keyword">const</span> struct timespec *timeout, <span class="keyword">const</span> <span class="keyword">sigset_t</span> *sigmask);</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>在这种模型之下，服务器的模式就变成这样：  </p>
+<ol>
+<li>有1w个连接（1w个文件描述符），通过 select 系统调用返回可用的文件描述符 -&gt; 时间复杂度为O(1)</li>
+<li>对于可用的m个文件描述符，进行读操作 -&gt; 时间复杂度为O(m)</li>
+</ol>
+</li>
+</ul>
+<h2 id="select-的问题是什么？"><a href="#select-的问题是什么？" class="headerlink" title="select 的问题是什么？"></a>select 的问题是什么？</h2><ol>
+<li>假如有1w个连接（1w个文件描述符），每次循环一次调用一次selelct，每次select我需要将这一万个文件描述符传进去，内核对这1w个fd进行遍历，时间复杂度为 O(n)，但这与nio中的 O(n) 不同，后者是 O(n) 次系统调用。</li>
+<li>每次 select 都需要大量传值（1w个fd） </li>
+<li>每次 select 内核都需要 O(n) 的遍历</li>
+</ol>
+<h2 id="select-如何优化？"><a href="#select-如何优化？" class="headerlink" title="select 如何优化？"></a>select 如何优化？</h2><ul>
+<li>如果内核中可以开辟一个空间，服务器每次 accept 到一个连接（产生一个文件描述符fd），服务器将fd传入内核，让内核保存，这样就可以减少传递的过程</li>
+<li>内核事件驱动模式，网卡收到数据，内核将这些 fd 进行标记，后续服务器通过系统调用得到这些有数据的fd即可<ul>
+<li>上面说的这种事件驱动的实现是通过中断来实现</li>
+<li>kernel 会为硬件驱动在内存中开辟 DMA 空间</li>
+<li>网卡收到数据，会将数据放到 DMA 空间中</li>
+<li>网卡通过硬中断，中断CPU，让CPU去 DMA 空间中读取数据，得到哪个文件描述符（哪个socket）有数据</li>
+<li>这样内核就可以直到哪些 fd 中有数据 </li>
+</ul>
+</li>
+<li>总的来说，上述的两点分别解决了select的 问题2 &amp; 问题3，为此，系统内核增加了系统调用 <code>epoll</code></li>
+</ul>
+<h1 id="epoll"><a href="#epoll" class="headerlink" title="epoll"></a>epoll</h1><ul>
+<li>event poll</li>
+<li>同步模型 ： 多路复用器只是返回一个fd状态，具体的读/写还是得进程自己去操作，所以说是同步的</li>
+<li>多路复用器（多条路/多个连接 复用了同一个系统调用）<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;sys/epoll.h&gt;  </span></span></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">epoll_create</span><span class="params">(<span class="keyword">int</span> <span class="built_in">size</span>)</span></span>; <span class="comment">// int epoll_create1(int flags);</span></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">epoll_ctl</span><span class="params">(<span class="keyword">int</span> epfd, <span class="keyword">int</span> op, <span class="keyword">int</span> fd, struct epoll_event *event)</span></span>;</span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">epoll_wait</span><span class="params">(<span class="keyword">int</span> epfd, struct epoll_event *events, <span class="keyword">int</span> maxevents, <span class="keyword">int</span> timeout)</span></span>;</span><br></pre></td></tr></table></figure>
+
+</li>
+</ul>
+<h2 id="epoll-使用的流程"><a href="#epoll-使用的流程" class="headerlink" title="epoll 使用的流程"></a>epoll 使用的流程</h2><ol>
+<li>通过 <code>epoll_create</code> 系统调用在内核创建一块区域，返回一个 fd</li>
+<li>当有 连接建立/连接断开，通过 <code>epoll_ctl</code> 系统调用来对内核的这块空间进行修改</li>
+<li>每次循环通过 <code>epoll_wait</code> 来获取网络数据/事件</li>
+</ol>
+<h2 id="epoll-的边缘触发-ET-和水平触发-LT"><a href="#epoll-的边缘触发-ET-和水平触发-LT" class="headerlink" title="epoll 的边缘触发(ET)和水平触发(LT)"></a>epoll 的边缘触发(ET)和水平触发(LT)</h2><ul>
+<li><p>epoll的默认模式是水平触发。</p>
+</li>
+<li><p>先大概了解一下这两种触发模式有什么不同：</p>
+<ol>
+<li>水平触发(Level Trigger,也称条件触发)：只要满足条件,就触发一个事件(只要有数据还未读完,就会一直触发)</li>
+<li>边缘触发(Edge Trigger)：每当状态发生变化时就触发一个事件。</li>
+</ol>
+</li>
+<li><p>ET模式在很大程度上减少了epoll事件被重复触发的次数，因此效率要比LT模式高。</p>
+</li>
+<li><p>可能概念不容易理解,这里举一个例子大概就能明白两者的区别了：比如某个人让你去买几袋酱油,你只买了一袋回去,水平触发的做法就是他让你继续去把剩下的几袋酱油买回来,如果没有完成任务,就一直通知你;边缘触发的做法就是不管完没完成任务,反正他让你买了,买没买完就是你自己的事了,下次买酱油这件事他就不管了,会让你去做其它的事。</p>
+</li>
+<li><p>当我们使用边缘触发时,将对应的文件描述符设置为非阻塞即可。</p>
+<ul>
+<li>因为 read 的时候可能一次性读不完，需要多次读数据,也就是一直读，直到读到EGAIN(EGAIN说明缓冲区已经空了)为止，如果是阻塞的话，会导致整个线程阻塞</li>
+</ul>
+</li>
+</ul>
+<h3 id="设置方法"><a href="#设置方法" class="headerlink" title="设置方法"></a>设置方法</h3><ul>
+<li><p>int epoll_ctl(int epfd, int op, int fd, struct epoll_event *event);</p>
+</li>
+<li><p>epoll的事件注册函数，它不同与select()是在监听事件时告诉内核要监听什么类型的事件，而是在这里先注册要监听的事件类型。</p>
+</li>
+<li><p>第一个参数是epoll_create()的返回值，</p>
+</li>
+<li><p>第二个参数表示动作，用三个宏来表示：</p>
+<ol>
+<li>EPOLL_CTL_ADD：注册新的fd到epfd中；</li>
+<li>EPOLL_CTL_MOD：修改已经注册的fd的监听事件；</li>
+<li>EPOLL_CTL_DEL：从epfd中删除一个fd；</li>
+</ol>
+</li>
+<li><p>第三个参数是需要监听的fd，第四个参数是告诉内核需要监听什么事，struct epoll_event结构如下：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">epoll_event</span> &#123;</span></span><br><span class="line"><span class="keyword">__uint32_t</span> events; <span class="comment">/* Epoll events /</span></span><br><span class="line"><span class="comment">epoll_data_t data; / User data variable */</span></span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>events可以是以下几个宏的集合：</p>
+<ol>
+<li>EPOLLIN ：表示对应的文件描述符可以读（包括对端SOCKET正常关闭）；</li>
+<li>EPOLLOUT：表示对应的文件描述符可以写；</li>
+<li>EPOLLPRI：表示对应的文件描述符有紧急的数据可读（这里应该表示有带外数据到来）；</li>
+<li>EPOLLERR：表示对应的文件描述符发生错误；</li>
+<li>EPOLLHUP：表示对应的文件描述符被挂断；</li>
+<li>EPOLLET： 将EPOLL设为边缘触发(Edge Triggered)模式，这是相对于水平触发(Level Triggered)来说的。</li>
+<li>EPOLLONESHOT：只监听一次事件，当监听完这次事件之后，如果还需要继续监听这个socket的话，需要再次把这个socket加入到EPOLL队列里。</li>
+</ol>
+</li>
+</ul>
+<h2 id="小结"><a href="#小结" class="headerlink" title="小结"></a>小结</h2><ul>
+<li>综合一下上面所说的几种网络模型，有这样的一个问题：不同网络模型中，CPU在执行什么？<ul>
+<li>select ： 部分时间是在调用select之后遍历fds，这部分时间就无法执行业务代码</li>
+<li>epoll ：cpu无需遍历fds，只有在中断的时候（必定有数据到达）才去读数据 -&gt; 尽量不浪费cpu</li>
+</ul>
+</li>
+</ul>
+<h1 id="几个IO相关的应用"><a href="#几个IO相关的应用" class="headerlink" title="几个IO相关的应用"></a>几个IO相关的应用</h1><h2 id="redis"><a href="#redis" class="headerlink" title="redis"></a>redis</h2><ul>
+<li>redis是nonblick的（轮询的），而 nginx 是阻塞的<ul>
+<li>redis 只有一个线程，这个线程除去要干io的事情需要干很多其他的事情（eg：客户端请求、LRU，LFU 的淘汰过滤、RDB/AOF）</li>
+<li>nginx 就是等待客户端请求，在进行后续操作，没有其他的工作</li>
+</ul>
+</li>
+<li>redis 是单线程，串行化</li>
+<li>redis 使用了 epoll 解决io消息事件的问题，即无论多少连接，epoll会告诉我去读/写哪些fds</li>
+<li>在redis 6.0 之前是纯单线程版本，一个线程不仅仅完成io数据的读写，还需要完成计算，并且返回客户端 </li>
+<li>redis 6.x 之后引入了多线程（IO threads）<ul>
+<li>通过epoll拿到多个可读写的fds</li>
+<li>redis允许多线程去读io（可以充分发挥CPU多核性能）</li>
+<li>但是读取到数据之后的计算操作依旧是有同一个线程去完成的（保证了操作的原子性+串行化）</li>
+<li>完成计算之后，需要返回客户端，这部操作可以由其他的线程完成</li>
+</ul>
+</li>
+</ul>
+<h2 id="kafka"><a href="#kafka" class="headerlink" title="kafka"></a>kafka</h2><ul>
+<li>零拷贝（前提：数据不需要加工，数据就是我磁盘中的某个文件）</li>
+<li>消息队列，支持持久化(存磁盘)</li>
+<li>由于需要存磁盘，绕不开 kernel </li>
+<li>kafka 是分 segment 的，每一个 segment 的大小可以配置，每一个 segment 就是对于一个磁盘文件</li>
+</ul>
+<h3 id="生产者发送数据"><a href="#生产者发送数据" class="headerlink" title="生产者发送数据"></a>生产者发送数据</h3><ul>
+<li>通过 epoll + recvfrom/read系统调用 获取数据，给数据加头部</li>
+<li>写数据的时候，如果直接通过 kernel，需要走系统调用，消耗很大<ul>
+<li>通过 mmap 系统调用完成</li>
+<li>其实就是使用 kernel 的缓存页</li>
+</ul>
+</li>
+</ul>
+<h3 id="消费者取数据"><a href="#消费者取数据" class="headerlink" title="消费者取数据"></a>消费者取数据</h3><ul>
+<li>读取数据，kafka发现数据在磁盘中，一般流程是这样的：<ul>
+<li>kafka进程通过系统调用去读磁盘，获得数据</li>
+<li>kafka进程再通过 write系统调用 将数据写到socket中</li>
+</ul>
+</li>
+<li>有两次系统调用</li>
+<li>kafka其实是通过另外一个系统调用 <code>sendfile</code>   <figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">ssize_t</span> sendfile(<span class="keyword">int</span> out_fd, <span class="keyword">int</span> in_fd, <span class="keyword">off_t</span> *offset, <span class="keyword">size_t</span> count);</span><br></pre></td></tr></table></figure></li>
+<li>通过上述系统调用，直接将两个 fd 传入（磁盘文件，socket），直接将数据发出</li>
+<li>nginx 也使用了 <code>sendfile</code></li>
+</ul>
+
+      
+    </div>
+    <div class="article-footer">
+      <blockquote class="mt-2x">
+  <ul class="post-copyright list-unstyled">
+    
+    <li class="post-copyright-link hidden-xs">
+      <strong>本文链接：</strong>
+      <a href="https://overtalk.site/2020/04/13/io/" title="彻底弄懂IO这件事情 - 从5种io模型开始" target="_blank" rel="external">https://overtalk.site/2020/04/13/io/</a>
+    </li>
+    
+    <li class="post-copyright-license">
+      <strong>版权声明： </strong> 本博客所有文章除特别声明外，均采用 <a href="http://creativecommons.org/licenses/by/4.0/deed.zh" target="_blank" rel="external">CC BY 4.0 CN协议</a> 许可协议。转载请注明出处！
+    </li>
+  </ul>
+</blockquote>
+
+
+<div class="panel panel-default panel-badger">
+  <div class="panel-body">
+    <figure class="media">
+      <div class="media-left">
+        <a href="https://github.com/overtalk" target="_blank" class="img-burn thumb-sm visible-lg">
+          <img src="/images/avatar.png" class="img-rounded w-full" alt="">
+        </a>
+      </div>
+      <div class="media-body">
+        <h3 class="media-heading"><a href="https://github.com/overtalk" target="_blank"><span class="text-dark">QinHan</span><small class="ml-1x">Game Developer &amp; Designer</small></a></h3>
+        <div>当你发现自己的才华撑不起野心时，就请安静下来学习吧！</div>
+      </div>
+    </figure>
+  </div>
+</div>
+
+
+    </div>
+  </article>
+  
+    
+  <section id="comments">
+  	
+           
+    
+  </section>
+
+
+  
+</div>
+
+  <nav class="bar bar-footer clearfix" data-stick-bottom>
+  <div class="bar-inner">
+  
+  <ul class="pager pull-left">
+    
+    <li class="prev">
+      <a href="/2020/04/14/net-design/" title="如何糅合各种网络协议？"><i class="icon icon-angle-left" aria-hidden="true"></i><span>&nbsp;&nbsp;上一篇</span></a>
+    </li>
+    
+    
+    <li class="next">
+      <a href="/2020/04/12/essay-20-4-12/" title="随笔 - 开个好头"><span>下一篇&nbsp;&nbsp;</span><i class="icon icon-angle-right" aria-hidden="true"></i></a>
+    </li>
+    
+    
+  </ul>
+  
+  
+  <!-- Button trigger modal -->
+  <button type="button" class="btn btn-fancy btn-donate pop-onhover bg-gradient-warning" data-toggle="modal" data-target="#donateModal"><span>赏</span></button>
+  <!-- <div class="wave-icon wave-icon-danger btn-donate" data-toggle="modal" data-target="#donateModal">
+    <div class="wave-circle"><span class="icon"><i class="icon icon-bill"></i></span></div>
+  </div> -->
+  
+  
+  <div class="bar-right">
+    
+    <div class="share-component" data-sites="weibo,qq,wechat,facebook,twitter" data-mobile-sites="weibo,qq,qzone"></div>
+    
+  </div>
+  </div>
+</nav>
+  
+<!-- Modal -->
+<div class="modal modal-center modal-small modal-xs-full fade" id="donateModal" tabindex="-1" role="dialog">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content donate">
+      <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+      <div class="modal-body">
+        <div class="donate-box">
+          <div class="donate-head">
+            <p>感谢您的支持，我会继续努力的!</p>
+          </div>
+          <div class="tab-content">
+            <div role="tabpanel" class="tab-pane fade active in" id="alipay">
+              <div class="donate-payimg">
+                <img src="/images/donate/alipayimg.png" alt="扫码支持" title="扫一扫" />
+              </div>
+              <p class="text-muted mv">喜欢就收藏，疼爱就打赏！</p>
+              <p class="text-grey">支付宝扫一扫</p>
+            </div>
+            <div role="tabpanel" class="tab-pane fade" id="wechatpay">
+              <div class="donate-payimg">
+                <img src="/images/donate/wechatpayimg.png" alt="扫码支持" title="扫一扫" />
+              </div>
+              <p class="text-muted mv">喜欢就收藏，疼爱就打赏！</p>
+              <p class="text-grey">微信扫一扫</p>
+            </div>
+          </div>
+          <div class="donate-footer">
+            <ul class="nav nav-tabs nav-justified" role="tablist">
+              <li role="presentation" class="active">
+                <a href="#alipay" id="alipay-tab" role="tab" data-toggle="tab" aria-controls="alipay" aria-expanded="true"><i class="icon icon-alipay"></i> 支付宝</a>
+              </li>
+              <li role="presentation" class="">
+                <a href="#wechatpay" role="tab" id="wechatpay-tab" data-toggle="tab" aria-controls="wechatpay" aria-expanded="false"><i class="icon icon-wepay"></i> 微信支付</a>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+
+</main>
+
+  <footer class="footer" itemscope itemtype="http://schema.org/WPFooter">
+	
+	
+    <ul class="social-links">
+    	
+        <li><a href="https://github.com/overtalk" target="_blank" title="Github" data-toggle=tooltip data-placement=top><i class="icon icon-github"></i></a></li>
+        
+        <li><a href="/atom.xml" target="_blank" title="Rss" data-toggle=tooltip data-placement=top><i class="icon icon-rss"></i></a></li>
+        
+    </ul>
+
+    <div class="copyright">
+    	
+        <div class="publishby">
+        	Powered by <a href="https://hexo.io/" target="_blank"> Hexo </a>base on <a href="https://github.com/cofess/hexo-theme-pure" target="_blank">pure</a>.
+        </div>
+    </div>
+</footer>
+  <script src="//cdn.jsdelivr.net/npm/jquery@1.12.4/dist/jquery.min.js"></script>
+<script>
+window.jQuery || document.write('<script src="js/jquery.min.js"><\/script>')
+</script>
+<script src="/js/plugin.min.js"></script>
+<script src="/js/application.js"></script>
+
+    <script>
+(function (window) {
+    var INSIGHT_CONFIG = {
+        TRANSLATION: {
+            POSTS: '文章',
+            PAGES: '页面',
+            CATEGORIES: '分类',
+            TAGS: '标签',
+            UNTITLED: '(未命名)',
+        },
+        ROOT_URL: '/',
+        CONTENT_URL: '/content.json',
+    };
+    window.INSIGHT_CONFIG = INSIGHT_CONFIG;
+})(window);
+</script>
+<script src="/js/insight.js"></script>
+
+
+
+
+
+   
+<script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+
+
+
+   
+    
+  <!-- <link rel="stylesheet" href="https://unpkg.com/gitalk/dist/gitalk.css"> -->
+  <script src="//cdn.jsdelivr.net/npm/gitalk@1.4.0/dist/gitalk.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/blueimp-md5@2.10.0/js/md5.min.js"></script>
+  <script type="text/javascript">
+  var gitalk = new Gitalk({
+    clientID: '8b37930d2d91b16067d3',
+    clientSecret: '3e1cf0374a8d938b6e1d1c8239ff068ac5de5c96',
+    repo: 'overtalk.github.io',
+    owner: 'overtalk',
+    admin: ['overtalk'],
+    id: md5(location.pathname),
+    distractionFreeMode: true
+  })
+  gitalk.render('comments')
+  </script>
+
+      
+
+
+
+
+
+
+
+</body>
+</html>

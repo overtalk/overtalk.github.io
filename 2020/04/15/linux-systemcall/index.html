@@ -1,0 +1,664 @@
+<!DOCTYPE html>
+<html lang=zh>
+<head>
+  <meta charset="utf-8">
+  
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no, minimal-ui">
+  <meta name="renderer" content="webkit">
+  <meta http-equiv="Cache-Control" content="no-transform" />
+  <meta http-equiv="Cache-Control" content="no-siteapp" />
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <meta name="format-detection" content="telephone=no,email=no,adress=no">
+  <!-- Color theme for statusbar -->
+  <meta name="theme-color" content="#000000" />
+  <!-- 强制页面在当前窗口以独立页面显示,防止别人在框架里调用页面 -->
+  <meta http-equiv="window-target" content="_top" />
+  
+  
+  <title>如何查看进程的系统调用 | Overtalk</title>
+  <meta name="description" content="什么是系统调用我就不赘述了，不清楚的可以去参考我的另外一篇博客用户态 内核态 本文主要是带大家看看怎样去查看 进程对于内核的系统调用  linux 进程即文件 在 linux 中，一切皆为文件，socket 是文件，进程也是文件 那么进程的文件在哪呢？ 每个进程都有一个进程号（eg ：pid = 3645） 那么进程的相关文件就在 &#x2F;proc&#x2F;3645 目录下 重点关注几个文件夹： ask 目录">
+<meta name="keywords" content="linux,systemcall">
+<meta property="og:type" content="article">
+<meta property="og:title" content="如何查看进程的系统调用">
+<meta property="og:url" content="https:&#x2F;&#x2F;overtalk.site&#x2F;2020&#x2F;04&#x2F;15&#x2F;linux-systemcall&#x2F;index.html">
+<meta property="og:site_name" content="QinHan&#39;s Site">
+<meta property="og:description" content="什么是系统调用我就不赘述了，不清楚的可以去参考我的另外一篇博客用户态 内核态 本文主要是带大家看看怎样去查看 进程对于内核的系统调用  linux 进程即文件 在 linux 中，一切皆为文件，socket 是文件，进程也是文件 那么进程的文件在哪呢？ 每个进程都有一个进程号（eg ：pid = 3645） 那么进程的相关文件就在 &#x2F;proc&#x2F;3645 目录下 重点关注几个文件夹： ask 目录">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:image" content="https:&#x2F;&#x2F;overtalk.site&#x2F;images&#x2F;posts&#x2F;linux-systemcall&#x2F;demo.png">
+<meta property="og:image" content="https:&#x2F;&#x2F;overtalk.site&#x2F;images&#x2F;posts&#x2F;linux-systemcall&#x2F;stace.png">
+<meta property="og:updated_time" content="2022-07-19T07:53:37.897Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https:&#x2F;&#x2F;overtalk.site&#x2F;images&#x2F;posts&#x2F;linux-systemcall&#x2F;demo.png">
+  <!-- Canonical links -->
+  <link rel="canonical" href="https://overtalk.site/2020/04/15/linux-systemcall/index.html">
+  
+    <link rel="alternate" href="/atom.xml" title="QinHan&#39;s Site" type="application/atom+xml">
+  
+  
+    <link rel="icon" href="/favicon.png" type="image/x-icon">
+  
+  <link rel="stylesheet" href="/css/style.css">
+  
+  
+  
+  
+    <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/gitalk@1.4.0/dist/gitalk.min.css">
+  
+</head>
+
+
+<body class="main-center theme-black" itemscope itemtype="http://schema.org/WebPage">
+  <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+  <div class="slimContent">
+    <div class="navbar-header">
+      
+      
+      <div class="profile-block text-center">
+        <a id="avatar" href="https://github.com/overtalk" target="_blank">
+          <img class="img-circle img-rotate" src="/images/avatar.png" width="200" height="200">
+        </a>
+        <h2 id="name" class="hidden-xs hidden-sm">QinHan</h2>
+        <h3 id="title" class="hidden-xs hidden-sm hidden-md">Game Developer &amp; Designer</h3>
+        <small id="location" class="text-muted hidden-xs hidden-sm"><i class="icon icon-map-marker"></i> Shanghai, China</small>
+      </div>
+      
+      <div class="search" id="search-form-wrap">
+
+    <form class="search-form sidebar-form">
+        <div class="input-group">
+            <input type="text" class="search-form-input form-control" placeholder="搜索" />
+            <span class="input-group-btn">
+                <button type="submit" class="search-form-submit btn btn-flat" onclick="return false;"><i class="icon icon-search"></i></button>
+            </span>
+        </div>
+    </form>
+    <div class="ins-search">
+  <div class="ins-search-mask"></div>
+  <div class="ins-search-container">
+    <div class="ins-input-wrapper">
+      <input type="text" class="ins-search-input" placeholder="想要查找什么..." x-webkit-speech />
+      <button type="button" class="close ins-close ins-selectable" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button>
+    </div>
+    <div class="ins-section-wrapper">
+      <div class="ins-section-container"></div>
+    </div>
+  </div>
+</div>
+
+
+</div>
+      <button class="navbar-toggle collapsed" type="button" data-toggle="collapse" data-target="#main-navbar" aria-controls="main-navbar" aria-expanded="false">
+        <span class="sr-only">Toggle navigation</span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+    </div>
+    <nav id="main-navbar" class="collapse navbar-collapse" itemscope itemtype="http://schema.org/SiteNavigationElement" role="navigation">
+      <ul class="nav navbar-nav main-nav menu-highlight">
+        
+        
+        <li class="menu-item menu-item-home">
+          <a href="/.">
+            
+            <i class="icon icon-home-fill"></i>
+            
+            <span class="menu-title">首页</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives">
+            
+            <i class="icon icon-archives-fill"></i>
+            
+            <span class="menu-title">归档</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories">
+            
+            <i class="icon icon-folder"></i>
+            
+            <span class="menu-title">分类</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags">
+            
+            <i class="icon icon-tags"></i>
+            
+            <span class="menu-title">标签</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-repository">
+          <a href="/repository">
+            
+            <i class="icon icon-project"></i>
+            
+            <span class="menu-title">项目</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-links">
+          <a href="/links">
+            
+            <i class="icon icon-friendship"></i>
+            
+            <span class="menu-title">友链</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about">
+            
+            <i class="icon icon-cup-fill"></i>
+            
+            <span class="menu-title">关于</span>
+          </a>
+        </li>
+        
+      </ul>
+      
+	
+    <ul class="social-links">
+    	
+        <li><a href="https://github.com/overtalk" target="_blank" title="Github" data-toggle=tooltip data-placement=top><i class="icon icon-github"></i></a></li>
+        
+        <li><a href="/atom.xml" target="_blank" title="Rss" data-toggle=tooltip data-placement=top><i class="icon icon-rss"></i></a></li>
+        
+    </ul>
+
+    </nav>
+  </div>
+</header>
+
+  
+    <aside class="sidebar" itemscope itemtype="http://schema.org/WPSideBar">
+  <div class="slimContent">
+    
+      <div class="widget">
+    <h3 class="widget-title">公告</h3>
+    <div class="widget-body">
+        <div id="board">
+            <div class="content">
+                <p>欢迎交流与分享经验!</p><p>邮箱：qinhan_shu@163.com</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">分类</h3>
+    <div class="widget-body">
+      <ul class="category-list"><li class="category-list-item"><a class="category-list-link" href="/categories/fragment/">fragment</a><span class="category-list-count">3</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/interview/">interview</a><span class="category-list-count">4</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/jewellery/">jewellery</a><span class="category-list-count">4</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/linux/">linux</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/minio/">minio</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/mongo/">mongo</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/rtc/">rtc</a><span class="category-list-count">3</span><ul class="category-list-child"><li class="category-list-item"><a class="category-list-link" href="/categories/rtc/book/">book</a><span class="category-list-count">1</span><ul class="category-list-child"><li class="category-list-item"><a class="category-list-link" href="/categories/rtc/book/freeswitch/">freeswitch</a><span class="category-list-count">1</span></li></ul></li></ul></li><li class="category-list-item"><a class="category-list-link" href="/categories/%E7%BC%96%E7%A8%8B/">编程</a><span class="category-list-count">141</span><ul class="category-list-child"><li class="category-list-item"><a class="category-list-link" href="/categories/%E7%BC%96%E7%A8%8B/%E6%B8%B8%E6%88%8F/">游戏</a><span class="category-list-count">1</span></li></ul></li><li class="category-list-item"><a class="category-list-link" href="/categories/%E9%9A%8F%E7%AC%94/">随笔</a><span class="category-list-count">2</span></li></ul>
+    </div>
+  </div>
+
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">标签</h3>
+    <div class="widget-body">
+      <ul class="tag-list" itemprop="keywords"><li class="tag-list-item"><a class="tag-list-link" href="/tags/CI-CD/" rel="tag">CI/CD</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Docker/" rel="tag">Docker</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Golang/" rel="tag">Golang</a><span class="tag-list-count">35</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Nagle/" rel="tag">Nagle</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Network/" rel="tag">Network</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Redis/" rel="tag">Redis</a><span class="tag-list-count">6</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Redis%E5%A4%87%E4%BB%BD/" rel="tag">Redis备份</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Shadowsocks/" rel="tag">Shadowsocks</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Socks5/" rel="tag">Socks5</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/algorithm/" rel="tag">algorithm</a><span class="tag-list-count">8</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/clion/" rel="tag">clion</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/cpp/" rel="tag">cpp</a><span class="tag-list-count">50</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/docker/" rel="tag">docker</a><span class="tag-list-count">3</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/dw/" rel="tag">dw</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/endian/" rel="tag">endian</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/epoll/" rel="tag">epoll</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/freeswitch/" rel="tag">freeswitch</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/git/" rel="tag">git</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/gpg/" rel="tag">gpg</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/interview/" rel="tag">interview</a><span class="tag-list-count">4</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/io/" rel="tag">io</a><span class="tag-list-count">3</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/ip/" rel="tag">ip</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/iptables/" rel="tag">iptables</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/k8s/" rel="tag">k8s</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/kernal/" rel="tag">kernal</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/linux/" rel="tag">linux</a><span class="tag-list-count">8</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/loadbalance/" rel="tag">loadbalance</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/lock-free/" rel="tag">lock-free</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/lua/" rel="tag">lua</a><span class="tag-list-count">9</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/mac/" rel="tag">mac</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/mongo/" rel="tag">mongo</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/mysql/" rel="tag">mysql</a><span class="tag-list-count">3</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/network/" rel="tag">network</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/python/" rel="tag">python</a><span class="tag-list-count">3</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/recastnavigation/" rel="tag">recastnavigation</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/regex/" rel="tag">regex</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/rtc/" rel="tag">rtc</a><span class="tag-list-count">3</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/service-mesh/" rel="tag">service mesh</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/shadowsocks/" rel="tag">shadowsocks</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/shell/" rel="tag">shell</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/ssh/" rel="tag">ssh</a><span class="tag-list-count">3</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/systemcall/" rel="tag">systemcall</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/systemd/" rel="tag">systemd</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/tcp/" rel="tag">tcp</a><span class="tag-list-count">6</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E4%B8%AA%E4%BA%BA%E7%BD%91%E7%9B%98/" rel="tag">个人网盘</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%B9%B6%E5%8F%91/" rel="tag">并发</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E6%B8%B8%E6%88%8F/" rel="tag">游戏</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E9%9A%8F%E7%AC%94/" rel="tag">随笔</a><span class="tag-list-count">2</span></li></ul>
+    </div>
+  </div>
+
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">标签云</h3>
+    <div class="widget-body tagcloud">
+      <a href="/tags/CI-CD/" style="font-size: 13px;">CI/CD</a> <a href="/tags/Docker/" style="font-size: 13px;">Docker</a> <a href="/tags/Golang/" style="font-size: 13.88px;">Golang</a> <a href="/tags/Nagle/" style="font-size: 13px;">Nagle</a> <a href="/tags/Network/" style="font-size: 13px;">Network</a> <a href="/tags/Redis/" style="font-size: 13.5px;">Redis</a> <a href="/tags/Redis%E5%A4%87%E4%BB%BD/" style="font-size: 13px;">Redis备份</a> <a href="/tags/Shadowsocks/" style="font-size: 13px;">Shadowsocks</a> <a href="/tags/Socks5/" style="font-size: 13px;">Socks5</a> <a href="/tags/algorithm/" style="font-size: 13.63px;">algorithm</a> <a href="/tags/clion/" style="font-size: 13px;">clion</a> <a href="/tags/cpp/" style="font-size: 14px;">cpp</a> <a href="/tags/docker/" style="font-size: 13.25px;">docker</a> <a href="/tags/dw/" style="font-size: 13px;">dw</a> <a href="/tags/endian/" style="font-size: 13px;">endian</a> <a href="/tags/epoll/" style="font-size: 13px;">epoll</a> <a href="/tags/freeswitch/" style="font-size: 13px;">freeswitch</a> <a href="/tags/git/" style="font-size: 13px;">git</a> <a href="/tags/gpg/" style="font-size: 13px;">gpg</a> <a href="/tags/interview/" style="font-size: 13.38px;">interview</a> <a href="/tags/io/" style="font-size: 13.25px;">io</a> <a href="/tags/ip/" style="font-size: 13.13px;">ip</a> <a href="/tags/iptables/" style="font-size: 13px;">iptables</a> <a href="/tags/k8s/" style="font-size: 13px;">k8s</a> <a href="/tags/kernal/" style="font-size: 13px;">kernal</a> <a href="/tags/linux/" style="font-size: 13.63px;">linux</a> <a href="/tags/loadbalance/" style="font-size: 13.13px;">loadbalance</a> <a href="/tags/lock-free/" style="font-size: 13px;">lock-free</a> <a href="/tags/lua/" style="font-size: 13.75px;">lua</a> <a href="/tags/mac/" style="font-size: 13.13px;">mac</a> <a href="/tags/mongo/" style="font-size: 13px;">mongo</a> <a href="/tags/mysql/" style="font-size: 13.25px;">mysql</a> <a href="/tags/network/" style="font-size: 13px;">network</a> <a href="/tags/python/" style="font-size: 13.25px;">python</a> <a href="/tags/recastnavigation/" style="font-size: 13px;">recastnavigation</a> <a href="/tags/regex/" style="font-size: 13px;">regex</a> <a href="/tags/rtc/" style="font-size: 13.25px;">rtc</a> <a href="/tags/service-mesh/" style="font-size: 13px;">service mesh</a> <a href="/tags/shadowsocks/" style="font-size: 13px;">shadowsocks</a> <a href="/tags/shell/" style="font-size: 13.13px;">shell</a> <a href="/tags/ssh/" style="font-size: 13.25px;">ssh</a> <a href="/tags/systemcall/" style="font-size: 13.13px;">systemcall</a> <a href="/tags/systemd/" style="font-size: 13px;">systemd</a> <a href="/tags/tcp/" style="font-size: 13.5px;">tcp</a> <a href="/tags/%E4%B8%AA%E4%BA%BA%E7%BD%91%E7%9B%98/" style="font-size: 13px;">个人网盘</a> <a href="/tags/%E5%B9%B6%E5%8F%91/" style="font-size: 13px;">并发</a> <a href="/tags/%E6%B8%B8%E6%88%8F/" style="font-size: 13px;">游戏</a> <a href="/tags/%E9%9A%8F%E7%AC%94/" style="font-size: 13.13px;">随笔</a>
+    </div>
+  </div>
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">归档</h3>
+    <div class="widget-body">
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2022/07/">七月 2022</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/02/">二月 2021</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/01/">一月 2021</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2020/11/">十一月 2020</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2020/10/">十月 2020</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2020/08/">八月 2020</a><span class="archive-list-count">2</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2020/07/">七月 2020</a><span class="archive-list-count">15</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2020/06/">六月 2020</a><span class="archive-list-count">3</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2020/05/">五月 2020</a><span class="archive-list-count">6</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2020/04/">四月 2020</a><span class="archive-list-count">14</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2020/03/">三月 2020</a><span class="archive-list-count">16</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2020/02/">二月 2020</a><span class="archive-list-count">15</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2020/01/">一月 2020</a><span class="archive-list-count">13</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2019/12/">十二月 2019</a><span class="archive-list-count">20</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2019/11/">十一月 2019</a><span class="archive-list-count">6</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2019/10/">十月 2019</a><span class="archive-list-count">25</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2019/09/">九月 2019</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2019/08/">八月 2019</a><span class="archive-list-count">2</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2019/07/">七月 2019</a><span class="archive-list-count">9</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2019/04/">四月 2019</a><span class="archive-list-count">2</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2019/03/">三月 2019</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2018/11/">十一月 2018</a><span class="archive-list-count">9</span></li></ul>
+    </div>
+  </div>
+
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">最新文章</h3>
+    <div class="widget-body">
+      <ul class="recent-post-list list-unstyled no-thumbnail">
+        
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                
+              </p>
+              <p class="item-title">
+                <a href="/2022/07/19/bitmap/" class="title">bitmap</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2022-07-19T15:47:57.000Z" itemprop="datePublished">2022-07-19</time>
+              </p>
+            </div>
+          </li>
+          
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                <a class="category-link" href="/categories/%E7%BC%96%E7%A8%8B/">编程</a>
+              </p>
+              <p class="item-title">
+                <a href="/2021/02/02/recast-1/" class="title">导航网格-基础概念&amp;数据结构</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2021-02-02T16:38:43.000Z" itemprop="datePublished">2021-02-02</time>
+              </p>
+            </div>
+          </li>
+          
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                <a class="category-link" href="/categories/mongo/">mongo</a>
+              </p>
+              <p class="item-title">
+                <a href="/2021/01/19/mongo-metas/" class="title">mongo 杂记</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2021-01-19T10:22:54.000Z" itemprop="datePublished">2021-01-19</time>
+              </p>
+            </div>
+          </li>
+          
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                <a class="category-link" href="/categories/%E7%BC%96%E7%A8%8B/">编程</a>
+              </p>
+              <p class="item-title">
+                <a href="/2020/11/08/py-attribute/" class="title">Python 如何查找属性</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2020-11-08T15:21:28.000Z" itemprop="datePublished">2020-11-08</time>
+              </p>
+            </div>
+          </li>
+          
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                <a class="category-link" href="/categories/%E7%BC%96%E7%A8%8B/">编程</a>
+              </p>
+              <p class="item-title">
+                <a href="/2020/10/10/network-tcp-optimization/" class="title">Linux TCP/IP 性能调优</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2020-10-10T03:51:46.000Z" itemprop="datePublished">2020-10-10</time>
+              </p>
+            </div>
+          </li>
+          
+      </ul>
+    </div>
+  </div>
+  
+
+    
+  </div>
+</aside>
+
+  
+  
+<main class="main" role="main">
+  <div class="content">
+  <article id="post-linux-systemcall" class="article article-type-post" itemscope itemtype="http://schema.org/BlogPosting">
+    
+    <div class="article-header">
+      
+        
+  
+    <h1 class="article-title" itemprop="name">
+      如何查看进程的系统调用
+    </h1>
+  
+
+      
+      <div class="article-meta">
+        <span class="article-date">
+    <i class="icon icon-calendar-check"></i>
+	<a href="/2020/04/15/linux-systemcall/" class="article-date">
+	  <time datetime="2020-04-15T10:00:58.000Z" itemprop="datePublished">2020-04-15</time>
+	</a>
+</span>
+        
+  <span class="article-category">
+    <i class="icon icon-folder"></i>
+    <a class="article-category-link" href="/categories/jewellery/">jewellery</a>
+  </span>
+
+        
+  <span class="article-tag">
+    <i class="icon icon-tags"></i>
+	<a class="article-tag-link" href="/tags/linux/" rel="tag">linux</a>, <a class="article-tag-link" href="/tags/systemcall/" rel="tag">systemcall</a>
+  </span>
+
+
+        
+	<span class="article-read hidden-xs">
+	    <i class="icon icon-eye-fill" aria-hidden="true"></i>
+	    <span id="busuanzi_container_page_pv">
+			<span id="busuanzi_value_page_pv">0</span>
+		</span>
+	</span>
+
+
+        <span class="post-comment"><i class="icon icon-comment"></i> <a href="/2020/04/15/linux-systemcall/#comments" class="article-comment-link">评论</a></span>
+        
+      </div>
+    </div>
+    <div class="article-entry marked-body" itemprop="articleBody">
+      
+        <blockquote>
+<p>什么是系统调用我就不赘述了，不清楚的可以去参考我的另外一篇博客<a href="https://overtalk.site/2020/03/16/linux-status/">用户态 内核态</a></p>
+<p>本文主要是带大家看看怎样去查看 <code>进程对于内核的系统调用</code></p>
+</blockquote>
+<h1 id="linux-进程即文件"><a href="#linux-进程即文件" class="headerlink" title="linux 进程即文件"></a>linux 进程即文件</h1><ul>
+<li>在 linux 中，一切皆为文件，socket 是文件，进程也是文件</li>
+<li>那么进程的文件在哪呢？<ul>
+<li>每个进程都有一个进程号（eg ：pid = 3645）</li>
+<li>那么进程的相关文件就在 <code>/proc/3645</code> 目录下</li>
+<li>重点关注几个文件夹：<ul>
+<li>ask 目录下就有所有 线程 的信息</li>
+<li>fd 文件描述符（一般用数字代表），每个进程都有io，至少三个（标准输入 0，标准输出 1，错误输出 2）<ul>
+<li>比如一个tcp服务程序，必定至少有一个 listen 的 socket，就对多出一个文件</li>
+<li>又比如这个 tcp server 使用了 epoll，使用 <code>epoll_create系统调用</code> 会创建一个fd，也会在这个目录之下</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>如果出现某个服务（进程）比较卡的时候，就可以进入 <code>task</code> 目录查看是否是进程太多，进行问题排查</li>
+</ul>
+<h2 id="例子"><a href="#例子" class="headerlink" title="例子"></a>例子</h2><ul>
+<li><p>一个简单的 echo tcpserver，监听在 <code>0.0.0.0:9999</code> 上</p>
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">package</span> main</span><br><span class="line"></span><br><span class="line"><span class="keyword">import</span> (</span><br><span class="line">	<span class="string">"bufio"</span></span><br><span class="line">	<span class="string">"fmt"</span></span><br><span class="line">	<span class="string">"io"</span></span><br><span class="line">	<span class="string">"log"</span></span><br><span class="line">	<span class="string">"net"</span></span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">	addr := <span class="string">"0.0.0.0:9999"</span></span><br><span class="line"></span><br><span class="line">	tcpAddr, err := net.ResolveTCPAddr(<span class="string">"tcp"</span>, addr)</span><br><span class="line">	<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">		log.Fatalf(<span class="string">"net.ResovleTCPAddr fail:%s"</span>, addr)</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	listener, err := net.ListenTCP(<span class="string">"tcp"</span>, tcpAddr)</span><br><span class="line">	<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">		log.Fatalf(<span class="string">"listen %s fail: %s"</span>, addr, err)</span><br><span class="line">	&#125; <span class="keyword">else</span> &#123;</span><br><span class="line">		log.Println(<span class="string">"tcp listening"</span>, addr)</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="keyword">for</span> &#123;</span><br><span class="line">		conn, err := listener.Accept()</span><br><span class="line">		<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">			log.Println(<span class="string">"listener.Accept error:"</span>, err)</span><br><span class="line">			<span class="keyword">continue</span></span><br><span class="line">		&#125;</span><br><span class="line"></span><br><span class="line">		<span class="keyword">go</span> handleConnection(conn)</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">func</span> <span class="title">handleConnection</span><span class="params">(conn net.Conn)</span></span> &#123;</span><br><span class="line">	<span class="keyword">defer</span> conn.Close()</span><br><span class="line">	reader := bufio.NewReader(conn)</span><br><span class="line">	<span class="keyword">for</span> &#123;</span><br><span class="line">		<span class="comment">// read client request data</span></span><br><span class="line">		bytes, err := reader.ReadBytes(<span class="keyword">byte</span>(<span class="string">'\n'</span>))</span><br><span class="line">		<span class="keyword">if</span> err != <span class="literal">nil</span> &#123;</span><br><span class="line">			<span class="keyword">if</span> err != io.EOF &#123;</span><br><span class="line">				fmt.Println(<span class="string">"failed to read data, err:"</span>, err)</span><br><span class="line">			&#125; <span class="keyword">else</span> &#123;</span><br><span class="line">				fmt.Println(<span class="string">"connection closed"</span>)</span><br><span class="line">			&#125;</span><br><span class="line">			<span class="keyword">return</span></span><br><span class="line">		&#125;</span><br><span class="line">		fmt.Printf(<span class="string">"request: %s"</span>, bytes)</span><br><span class="line"></span><br><span class="line">		<span class="comment">// prepend prefix and send as response</span></span><br><span class="line">		line := fmt.Sprintf(<span class="string">"%s"</span>, bytes)</span><br><span class="line">		fmt.Printf(<span class="string">"response: %s"</span>, line)</span><br><span class="line">		conn.Write([]<span class="keyword">byte</span>(line))</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>编译成linux版本</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o ./tcp-echo-server-linux ./main.go</span><br></pre></td></tr></table></figure>
+
+</li>
+</ul>
+<p><img src="/images/posts/linux-systemcall/demo.png" alt="echo tcp server"></p>
+<ul>
+<li>上面的终端中启动 echo tcpserver</li>
+<li>下面的终端中依次：<ul>
+<li>获取 echo server 进程号</li>
+<li>进入进程对于的目录</li>
+<li>进入 fd 目录，可以看到有三个基础的fd（0，1，2）以及一个 socket fd &amp; epoll fd</li>
+<li>进入 task 目录</li>
+</ul>
+</li>
+</ul>
+<h1 id="如何查看进程的系统调用"><a href="#如何查看进程的系统调用" class="headerlink" title="如何查看进程的系统调用"></a>如何查看进程的系统调用</h1><ul>
+<li><p><code>strace -ff -o ./ooxx ./tcp-echo-server-linux</code> </p>
+</li>
+<li><p>上述命令会运行 tcp-echo-server-linux，并且对它进行系统调用的抓取，并放到当前目录下<br><img src="/images/posts/linux-systemcall/stace.png" alt="echo tcp server"></p>
+</li>
+<li><p>执行上述命令之后，多出来很多 <code>xxoo*</code> 的文件，这些文件就记录来每个线程的系统调用</p>
+</li>
+<li><p>我将 ooxx.30927 中的内容贴出来</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br><span class="line">117</span><br><span class="line">118</span><br><span class="line">119</span><br><span class="line">120</span><br><span class="line">121</span><br><span class="line">122</span><br><span class="line">123</span><br><span class="line">124</span><br><span class="line">125</span><br><span class="line">126</span><br><span class="line">127</span><br><span class="line">128</span><br><span class="line">129</span><br><span class="line">130</span><br><span class="line">131</span><br><span class="line">132</span><br><span class="line">133</span><br><span class="line">134</span><br><span class="line">135</span><br><span class="line">136</span><br><span class="line">137</span><br><span class="line">138</span><br><span class="line">139</span><br><span class="line">140</span><br><span class="line">141</span><br><span class="line">142</span><br><span class="line">143</span><br><span class="line">144</span><br><span class="line">145</span><br><span class="line">146</span><br><span class="line">147</span><br><span class="line">148</span><br><span class="line">149</span><br><span class="line">150</span><br><span class="line">151</span><br><span class="line">152</span><br><span class="line">153</span><br><span class="line">154</span><br><span class="line">155</span><br><span class="line">156</span><br><span class="line">157</span><br><span class="line">158</span><br><span class="line">159</span><br><span class="line">160</span><br><span class="line">161</span><br><span class="line">162</span><br><span class="line">163</span><br><span class="line">164</span><br><span class="line">165</span><br><span class="line">166</span><br><span class="line">167</span><br><span class="line">168</span><br><span class="line">169</span><br><span class="line">170</span><br><span class="line">171</span><br><span class="line">172</span><br><span class="line">173</span><br><span class="line">174</span><br><span class="line">175</span><br><span class="line">176</span><br><span class="line">177</span><br><span class="line">178</span><br><span class="line">179</span><br><span class="line">180</span><br><span class="line">181</span><br><span class="line">182</span><br><span class="line">183</span><br><span class="line">184</span><br><span class="line">185</span><br><span class="line">186</span><br><span class="line">187</span><br><span class="line">188</span><br><span class="line">189</span><br><span class="line">190</span><br><span class="line">191</span><br><span class="line">192</span><br><span class="line">193</span><br><span class="line">194</span><br><span class="line">195</span><br><span class="line">196</span><br><span class="line">197</span><br><span class="line">198</span><br><span class="line">199</span><br><span class="line">200</span><br><span class="line">201</span><br><span class="line">202</span><br><span class="line">203</span><br><span class="line">204</span><br><span class="line">205</span><br></pre></td><td class="code"><pre><span class="line">execve(<span class="string">"./tcp-echo-server-linux"</span>, [<span class="string">"./tcp-echo-server-linux"</span>], 0x7ffcc5d16c08 /* 24 vars */) = 0</span><br><span class="line">arch_prctl(ARCH_SET_FS, 0x60c1f0)       = 0</span><br><span class="line">sched_getaffinity(0, 8192, [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]) = 8</span><br><span class="line">openat(AT_FDCWD, <span class="string">"/sys/kernel/mm/transparent_hugepage/hpage_pmd_size"</span>, O_RDONLY) = 3</span><br><span class="line"><span class="built_in">read</span>(3, <span class="string">"2097152\n"</span>, 20)                = 8</span><br><span class="line">close(3)                                = 0</span><br><span class="line">mmap(NULL, 262144, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7ff92955b000</span><br><span class="line">mmap(0xc000000000, 67108864, PROT_NONE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0xc000000000</span><br><span class="line">mmap(0xc000000000, 67108864, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_FIXED|MAP_ANONYMOUS, -1, 0) = 0xc000000000</span><br><span class="line">mmap(NULL, 33554432, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7ff92755b000</span><br><span class="line">mmap(NULL, 2164736, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7ff92734a000</span><br><span class="line">mmap(NULL, 65536, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7ff92733a000</span><br><span class="line">mmap(NULL, 65536, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7ff92732a000</span><br><span class="line">rt_sigprocmask(SIG_SETMASK, NULL, [], 8) = 0</span><br><span class="line">sigaltstack(NULL, &#123;ss_sp=NULL, ss_flags=SS_DISABLE, ss_size=0&#125;) = 0</span><br><span class="line">sigaltstack(&#123;ss_sp=0xc000002000, ss_flags=0, ss_size=32768&#125;, NULL) = 0</span><br><span class="line">rt_sigprocmask(SIG_SETMASK, [], NULL, 8) = 0</span><br><span class="line">gettid()                                = 30927</span><br><span class="line">rt_sigaction(SIGHUP, NULL, &#123;sa_handler=SIG_DFL, sa_mask=[], sa_flags=0&#125;, 8) = 0</span><br><span class="line">rt_sigaction(SIGHUP, &#123;sa_handler=0x459560, sa_mask=~[], sa_flags=SA_RESTORER|SA_ONSTACK|SA_RESTART|SA_SIGINFO, sa_restorer=0x459690&#125;, NULL, 8) = 0</span><br><span class="line">rt_sigaction(SIGINT, NULL, &#123;sa_handler=SIG_DFL, sa_mask=[], sa_flags=0&#125;, 8) = 0</span><br><span class="line">rt_sigaction(SIGINT, &#123;sa_handler=0x459560, sa_mask=~[], sa_flags=SA_RESTORER|SA_ONSTACK|SA_RESTART|SA_SIGINFO, sa_restorer=0x459690&#125;, NULL, 8) = 0</span><br><span class="line">rt_sigaction(SIGQUIT, NULL, &#123;sa_handler=SIG_DFL, sa_mask=[], sa_flags=0&#125;, 8) = 0</span><br><span class="line">rt_sigaction(SIGQUIT, &#123;sa_handler=0x459560, sa_mask=~[], sa_flags=SA_RESTORER|SA_ONSTACK|SA_RESTART|SA_SIGINFO, sa_restorer=0x459690&#125;, NULL, 8) = 0</span><br><span class="line">rt_sigaction(SIGILL, NULL, &#123;sa_handler=SIG_DFL, sa_mask=[], sa_flags=0&#125;, 8) = 0</span><br><span class="line">rt_sigaction(SIGILL, &#123;sa_handler=0x459560, sa_mask=~[], sa_flags=SA_RESTORER|SA_ONSTACK|SA_RESTART|SA_SIGINFO, sa_restorer=0x459690&#125;, NULL, 8) = 0</span><br><span class="line">rt_sigaction(SIGTRAP, NULL, &#123;sa_handler=SIG_DFL, sa_mask=[], sa_flags=0&#125;, 8) = 0</span><br><span class="line">rt_sigaction(SIGTRAP, &#123;sa_handler=0x459560, sa_mask=~[], sa_flags=SA_RESTORER|SA_ONSTACK|SA_RESTART|SA_SIGINFO, sa_restorer=0x459690&#125;, NULL, 8) = 0</span><br><span class="line">rt_sigaction(SIGABRT, NULL, &#123;sa_handler=SIG_DFL, sa_mask=[], sa_flags=0&#125;, 8) = 0</span><br><span class="line">rt_sigaction(SIGABRT, &#123;sa_handler=0x459560, sa_mask=~[], sa_flags=SA_RESTORER|SA_ONSTACK|SA_RESTART|SA_SIGINFO, sa_restorer=0x459690&#125;, NULL, 8) = 0</span><br><span class="line">rt_sigaction(SIGBUS, NULL, &#123;sa_handler=SIG_DFL, sa_mask=[], sa_flags=0&#125;, 8) = 0</span><br><span class="line">rt_sigaction(SIGBUS, &#123;sa_handler=0x459560, sa_mask=~[], sa_flags=SA_RESTORER|SA_ONSTACK|SA_RESTART|SA_SIGINFO, sa_restorer=0x459690&#125;, NULL, 8) = 0</span><br><span class="line">rt_sigaction(SIGFPE, NULL, &#123;sa_handler=SIG_DFL, sa_mask=[], sa_flags=0&#125;, 8) = 0</span><br><span class="line">rt_sigaction(SIGFPE, &#123;sa_handler=0x459560, sa_mask=~[], sa_flags=SA_RESTORER|SA_ONSTACK|SA_RESTART|SA_SIGINFO, sa_restorer=0x459690&#125;, NULL, 8) = 0</span><br><span class="line">rt_sigaction(SIGUSR1, NULL, &#123;sa_handler=SIG_DFL, sa_mask=[], sa_flags=0&#125;, 8) = 0</span><br><span class="line">rt_sigaction(SIGUSR1, &#123;sa_handler=0x459560, sa_mask=~[], sa_flags=SA_RESTORER|SA_ONSTACK|SA_RESTART|SA_SIGINFO, sa_restorer=0x459690&#125;, NULL, 8) = 0</span><br><span class="line">rt_sigaction(SIGSEGV, NULL, &#123;sa_handler=SIG_DFL, sa_mask=[], sa_flags=0&#125;, 8) = 0</span><br><span class="line">rt_sigaction(SIGSEGV, &#123;sa_handler=0x459560, sa_mask=~[], sa_flags=SA_RESTORER|SA_ONSTACK|SA_RESTART|SA_SIGINFO, sa_restorer=0x459690&#125;, NULL, 8) = 0</span><br><span class="line">rt_sigaction(SIGUSR2, NULL, &#123;sa_handler=SIG_DFL, sa_mask=[], sa_flags=0&#125;, 8) = 0</span><br><span class="line">rt_sigaction(SIGUSR2, &#123;sa_handler=0x459560, sa_mask=~[], sa_flags=SA_RESTORER|SA_ONSTACK|SA_RESTART|SA_SIGINFO, sa_restorer=0x459690&#125;, NULL, 8) = 0</span><br><span class="line">rt_sigaction(SIGPIPE, NULL, &#123;sa_handler=SIG_DFL, sa_mask=[], sa_flags=0&#125;, 8) = 0</span><br><span class="line">rt_sigaction(SIGPIPE, &#123;sa_handler=0x459560, sa_mask=~[], sa_flags=SA_RESTORER|SA_ONSTACK|SA_RESTART|SA_SIGINFO, sa_restorer=0x459690&#125;, NULL, 8) = 0</span><br><span class="line">rt_sigaction(SIGALRM, NULL, &#123;sa_handler=SIG_DFL, sa_mask=[], sa_flags=0&#125;, 8) = 0</span><br><span class="line">rt_sigaction(SIGALRM, &#123;sa_handler=0x459560, sa_mask=~[], sa_flags=SA_RESTORER|SA_ONSTACK|SA_RESTART|SA_SIGINFO, sa_restorer=0x459690&#125;, NULL, 8) = 0</span><br><span class="line">rt_sigaction(SIGTERM, NULL, &#123;sa_handler=SIG_DFL, sa_mask=[], sa_flags=0&#125;, 8) = 0</span><br><span class="line">rt_sigaction(SIGTERM, &#123;sa_handler=0x459560, sa_mask=~[], sa_flags=SA_RESTORER|SA_ONSTACK|SA_RESTART|SA_SIGINFO, sa_restorer=0x459690&#125;, NULL, 8) = 0</span><br><span class="line">rt_sigaction(SIGSTKFLT, NULL, &#123;sa_handler=SIG_DFL, sa_mask=[], sa_flags=0&#125;, 8) = 0</span><br><span class="line">rt_sigaction(SIGSTKFLT, &#123;sa_handler=0x459560, sa_mask=~[], sa_flags=SA_RESTORER|SA_ONSTACK|SA_RESTART|SA_SIGINFO, sa_restorer=0x459690&#125;, NULL, 8) = 0</span><br><span class="line">rt_sigaction(SIGCHLD, NULL, &#123;sa_handler=SIG_DFL, sa_mask=[], sa_flags=0&#125;, 8) = 0</span><br><span class="line">rt_sigaction(SIGCHLD, &#123;sa_handler=0x459560, sa_mask=~[], sa_flags=SA_RESTORER|SA_ONSTACK|SA_RESTART|SA_SIGINFO, sa_restorer=0x459690&#125;, NULL, 8) = 0</span><br><span class="line">rt_sigaction(SIGURG, NULL, &#123;sa_handler=SIG_DFL, sa_mask=[], sa_flags=0&#125;, 8) = 0</span><br><span class="line">rt_sigaction(SIGURG, &#123;sa_handler=0x459560, sa_mask=~[], sa_flags=SA_RESTORER|SA_ONSTACK|SA_RESTART|SA_SIGINFO, sa_restorer=0x459690&#125;, NULL, 8) = 0</span><br><span class="line">rt_sigaction(SIGXCPU, NULL, &#123;sa_handler=SIG_DFL, sa_mask=[], sa_flags=0&#125;, 8) = 0</span><br><span class="line">rt_sigaction(SIGXCPU, &#123;sa_handler=0x459560, sa_mask=~[], sa_flags=SA_RESTORER|SA_ONSTACK|SA_RESTART|SA_SIGINFO, sa_restorer=0x459690&#125;, NULL, 8) = 0</span><br><span class="line">rt_sigaction(SIGXFSZ, NULL, &#123;sa_handler=SIG_DFL, sa_mask=[], sa_flags=0&#125;, 8) = 0</span><br><span class="line">rt_sigaction(SIGXFSZ, &#123;sa_handler=0x459560, sa_mask=~[], sa_flags=SA_RESTORER|SA_ONSTACK|SA_RESTART|SA_SIGINFO, sa_restorer=0x459690&#125;, NULL, 8) = 0</span><br><span class="line">rt_sigaction(SIGVTALRM, NULL, &#123;sa_handler=SIG_DFL, sa_mask=[], sa_flags=0&#125;, 8) = 0</span><br><span class="line">rt_sigaction(SIGVTALRM, &#123;sa_handler=0x459560, sa_mask=~[], sa_flags=SA_RESTORER|SA_ONSTACK|SA_RESTART|SA_SIGINFO, sa_restorer=0x459690&#125;, NULL, 8) = 0</span><br><span class="line">rt_sigaction(SIGPROF, NULL, &#123;sa_handler=SIG_DFL, sa_mask=[], sa_flags=0&#125;, 8) = 0</span><br><span class="line">rt_sigaction(SIGPROF, &#123;sa_handler=0x459560, sa_mask=~[], sa_flags=SA_RESTORER|SA_ONSTACK|SA_RESTART|SA_SIGINFO, sa_restorer=0x459690&#125;, NULL, 8) = 0</span><br><span class="line">rt_sigaction(SIGWINCH, NULL, &#123;sa_handler=SIG_DFL, sa_mask=[], sa_flags=0&#125;, 8) = 0</span><br><span class="line">rt_sigaction(SIGWINCH, &#123;sa_handler=0x459560, sa_mask=~[], sa_flags=SA_RESTORER|SA_ONSTACK|SA_RESTART|SA_SIGINFO, sa_restorer=0x459690&#125;, NULL, 8) = 0</span><br><span class="line">rt_sigaction(SIGIO, NULL, &#123;sa_handler=SIG_DFL, sa_mask=[], sa_flags=0&#125;, 8) = 0</span><br><span class="line">rt_sigaction(SIGIO, &#123;sa_handler=0x459560, sa_mask=~[], sa_flags=SA_RESTORER|SA_ONSTACK|SA_RESTART|SA_SIGINFO, sa_restorer=0x459690&#125;, NULL, 8) = 0</span><br><span class="line">rt_sigaction(SIGPWR, NULL, &#123;sa_handler=SIG_DFL, sa_mask=[], sa_flags=0&#125;, 8) = 0</span><br><span class="line">rt_sigaction(SIGPWR, &#123;sa_handler=0x459560, sa_mask=~[], sa_flags=SA_RESTORER|SA_ONSTACK|SA_RESTART|SA_SIGINFO, sa_restorer=0x459690&#125;, NULL, 8) = 0</span><br><span class="line">rt_sigaction(SIGSYS, NULL, &#123;sa_handler=SIG_DFL, sa_mask=[], sa_flags=0&#125;, 8) = 0</span><br><span class="line">rt_sigaction(SIGSYS, &#123;sa_handler=0x459560, sa_mask=~[], sa_flags=SA_RESTORER|SA_ONSTACK|SA_RESTART|SA_SIGINFO, sa_restorer=0x459690&#125;, NULL, 8) = 0</span><br><span class="line">rt_sigaction(SIGRTMIN, NULL, &#123;sa_handler=SIG_DFL, sa_mask=[], sa_flags=0&#125;, 8) = 0</span><br><span class="line">rt_sigaction(SIGRT_1, NULL, &#123;sa_handler=SIG_DFL, sa_mask=[], sa_flags=0&#125;, 8) = 0</span><br><span class="line">rt_sigaction(SIGRT_2, NULL, &#123;sa_handler=SIG_DFL, sa_mask=[], sa_flags=0&#125;, 8) = 0</span><br><span class="line">rt_sigaction(SIGRT_2, &#123;sa_handler=0x459560, sa_mask=~[], sa_flags=SA_RESTORER|SA_ONSTACK|SA_RESTART|SA_SIGINFO, sa_restorer=0x459690&#125;, NULL, 8) = 0</span><br><span class="line">rt_sigaction(SIGRT_3, NULL, &#123;sa_handler=SIG_DFL, sa_mask=[], sa_flags=0&#125;, 8) = 0</span><br><span class="line">rt_sigaction(SIGRT_3, &#123;sa_handler=0x459560, sa_mask=~[], sa_flags=SA_RESTORER|SA_ONSTACK|SA_RESTART|SA_SIGINFO, sa_restorer=0x459690&#125;, NULL, 8) = 0</span><br><span class="line">rt_sigaction(SIGRT_4, NULL, &#123;sa_handler=SIG_DFL, sa_mask=[], sa_flags=0&#125;, 8) = 0</span><br><span class="line">rt_sigaction(SIGRT_4, &#123;sa_handler=0x459560, sa_mask=~[], sa_flags=SA_RESTORER|SA_ONSTACK|SA_RESTART|SA_SIGINFO, sa_restorer=0x459690&#125;, NULL, 8) = 0</span><br><span class="line">rt_sigaction(SIGRT_5, NULL, &#123;sa_handler=SIG_DFL, sa_mask=[], sa_flags=0&#125;, 8) = 0</span><br><span class="line">rt_sigaction(SIGRT_5, &#123;sa_handler=0x459560, sa_mask=~[], sa_flags=SA_RESTORER|SA_ONSTACK|SA_RESTART|SA_SIGINFO, sa_restorer=0x459690&#125;, NULL, 8) = 0</span><br><span class="line">rt_sigaction(SIGRT_6, NULL, &#123;sa_handler=SIG_DFL, sa_mask=[], sa_flags=0&#125;, 8) = 0</span><br><span class="line">rt_sigaction(SIGRT_6, &#123;sa_handler=0x459560, sa_mask=~[], sa_flags=SA_RESTORER|SA_ONSTACK|SA_RESTART|SA_SIGINFO, sa_restorer=0x459690&#125;, NULL, 8) = 0</span><br><span class="line">rt_sigaction(SIGRT_7, NULL, &#123;sa_handler=SIG_DFL, sa_mask=[], sa_flags=0&#125;, 8) = 0</span><br><span class="line">rt_sigaction(SIGRT_7, &#123;sa_handler=0x459560, sa_mask=~[], sa_flags=SA_RESTORER|SA_ONSTACK|SA_RESTART|SA_SIGINFO, sa_restorer=0x459690&#125;, NULL, 8) = 0</span><br><span class="line">rt_sigaction(SIGRT_8, NULL, &#123;sa_handler=SIG_DFL, sa_mask=[], sa_flags=0&#125;, 8) = 0</span><br><span class="line">rt_sigaction(SIGRT_8, &#123;sa_handler=0x459560, sa_mask=~[], sa_flags=SA_RESTORER|SA_ONSTACK|SA_RESTART|SA_SIGINFO, sa_restorer=0x459690&#125;, NULL, 8) = 0</span><br><span class="line">rt_sigaction(SIGRT_9, NULL, &#123;sa_handler=SIG_DFL, sa_mask=[], sa_flags=0&#125;, 8) = 0</span><br><span class="line">rt_sigaction(SIGRT_9, &#123;sa_handler=0x459560, sa_mask=~[], sa_flags=SA_RESTORER|SA_ONSTACK|SA_RESTART|SA_SIGINFO, sa_restorer=0x459690&#125;, NULL, 8) = 0</span><br><span class="line">rt_sigaction(SIGRT_10, NULL, &#123;sa_handler=SIG_DFL, sa_mask=[], sa_flags=0&#125;, 8) = 0</span><br><span class="line">rt_sigaction(SIGRT_10, &#123;sa_handler=0x459560, sa_mask=~[], sa_flags=SA_RESTORER|SA_ONSTACK|SA_RESTART|SA_SIGINFO, sa_restorer=0x459690&#125;, NULL, 8) = 0</span><br><span class="line">rt_sigaction(SIGRT_11, NULL, &#123;sa_handler=SIG_DFL, sa_mask=[], sa_flags=0&#125;, 8) = 0</span><br><span class="line">rt_sigaction(SIGRT_11, &#123;sa_handler=0x459560, sa_mask=~[], sa_flags=SA_RESTORER|SA_ONSTACK|SA_RESTART|SA_SIGINFO, sa_restorer=0x459690&#125;, NULL, 8) = 0</span><br><span class="line">rt_sigaction(SIGRT_12, NULL, &#123;sa_handler=SIG_DFL, sa_mask=[], sa_flags=0&#125;, 8) = 0</span><br><span class="line">rt_sigaction(SIGRT_12, &#123;sa_handler=0x459560, sa_mask=~[], sa_flags=SA_RESTORER|SA_ONSTACK|SA_RESTART|SA_SIGINFO, sa_restorer=0x459690&#125;, NULL, 8) = 0</span><br><span class="line">rt_sigaction(SIGRT_13, NULL, &#123;sa_handler=SIG_DFL, sa_mask=[], sa_flags=0&#125;, 8) = 0</span><br><span class="line">rt_sigaction(SIGRT_13, &#123;sa_handler=0x459560, sa_mask=~[], sa_flags=SA_RESTORER|SA_ONSTACK|SA_RESTART|SA_SIGINFO, sa_restorer=0x459690&#125;, NULL, 8) = 0</span><br><span class="line">rt_sigaction(SIGRT_14, NULL, &#123;sa_handler=SIG_DFL, sa_mask=[], sa_flags=0&#125;, 8) = 0</span><br><span class="line">rt_sigaction(SIGRT_14, &#123;sa_handler=0x459560, sa_mask=~[], sa_flags=SA_RESTORER|SA_ONSTACK|SA_RESTART|SA_SIGINFO, sa_restorer=0x459690&#125;, NULL, 8) = 0</span><br><span class="line">rt_sigaction(SIGRT_15, NULL, &#123;sa_handler=SIG_DFL, sa_mask=[], sa_flags=0&#125;, 8) = 0</span><br><span class="line">rt_sigaction(SIGRT_15, &#123;sa_handler=0x459560, sa_mask=~[], sa_flags=SA_RESTORER|SA_ONSTACK|SA_RESTART|SA_SIGINFO, sa_restorer=0x459690&#125;, NULL, 8) = 0</span><br><span class="line">rt_sigaction(SIGRT_16, NULL, &#123;sa_handler=SIG_DFL, sa_mask=[], sa_flags=0&#125;, 8) = 0</span><br><span class="line">rt_sigaction(SIGRT_16, &#123;sa_handler=0x459560, sa_mask=~[], sa_flags=SA_RESTORER|SA_ONSTACK|SA_RESTART|SA_SIGINFO, sa_restorer=0x459690&#125;, NULL, 8) = 0</span><br><span class="line">rt_sigaction(SIGRT_17, NULL, &#123;sa_handler=SIG_DFL, sa_mask=[], sa_flags=0&#125;, 8) = 0</span><br><span class="line">rt_sigaction(SIGRT_17, &#123;sa_handler=0x459560, sa_mask=~[], sa_flags=SA_RESTORER|SA_ONSTACK|SA_RESTART|SA_SIGINFO, sa_restorer=0x459690&#125;, NULL, 8) = 0</span><br><span class="line">rt_sigaction(SIGRT_18, NULL, &#123;sa_handler=SIG_DFL, sa_mask=[], sa_flags=0&#125;, 8) = 0</span><br><span class="line">rt_sigaction(SIGRT_18, &#123;sa_handler=0x459560, sa_mask=~[], sa_flags=SA_RESTORER|SA_ONSTACK|SA_RESTART|SA_SIGINFO, sa_restorer=0x459690&#125;, NULL, 8) = 0</span><br><span class="line">rt_sigaction(SIGRT_19, NULL, &#123;sa_handler=SIG_DFL, sa_mask=[], sa_flags=0&#125;, 8) = 0</span><br><span class="line">rt_sigaction(SIGRT_19, &#123;sa_handler=0x459560, sa_mask=~[], sa_flags=SA_RESTORER|SA_ONSTACK|SA_RESTART|SA_SIGINFO, sa_restorer=0x459690&#125;, NULL, 8) = 0</span><br><span class="line">rt_sigaction(SIGRT_20, NULL, &#123;sa_handler=SIG_DFL, sa_mask=[], sa_flags=0&#125;, 8) = 0</span><br><span class="line">rt_sigaction(SIGRT_20, &#123;sa_handler=0x459560, sa_mask=~[], sa_flags=SA_RESTORER|SA_ONSTACK|SA_RESTART|SA_SIGINFO, sa_restorer=0x459690&#125;, NULL, 8) = 0</span><br><span class="line">rt_sigaction(SIGRT_21, NULL, &#123;sa_handler=SIG_DFL, sa_mask=[], sa_flags=0&#125;, 8) = 0</span><br><span class="line">rt_sigaction(SIGRT_21, &#123;sa_handler=0x459560, sa_mask=~[], sa_flags=SA_RESTORER|SA_ONSTACK|SA_RESTART|SA_SIGINFO, sa_restorer=0x459690&#125;, NULL, 8) = 0</span><br><span class="line">rt_sigaction(SIGRT_22, NULL, &#123;sa_handler=SIG_DFL, sa_mask=[], sa_flags=0&#125;, 8) = 0</span><br><span class="line">rt_sigaction(SIGRT_22, &#123;sa_handler=0x459560, sa_mask=~[], sa_flags=SA_RESTORER|SA_ONSTACK|SA_RESTART|SA_SIGINFO, sa_restorer=0x459690&#125;, NULL, 8) = 0</span><br><span class="line">rt_sigaction(SIGRT_23, NULL, &#123;sa_handler=SIG_DFL, sa_mask=[], sa_flags=0&#125;, 8) = 0</span><br><span class="line">rt_sigaction(SIGRT_23, &#123;sa_handler=0x459560, sa_mask=~[], sa_flags=SA_RESTORER|SA_ONSTACK|SA_RESTART|SA_SIGINFO, sa_restorer=0x459690&#125;, NULL, 8) = 0</span><br><span class="line">rt_sigaction(SIGRT_24, NULL, &#123;sa_handler=SIG_DFL, sa_mask=[], sa_flags=0&#125;, 8) = 0</span><br><span class="line">rt_sigaction(SIGRT_24, &#123;sa_handler=0x459560, sa_mask=~[], sa_flags=SA_RESTORER|SA_ONSTACK|SA_RESTART|SA_SIGINFO, sa_restorer=0x459690&#125;, NULL, 8) = 0</span><br><span class="line">rt_sigaction(SIGRT_25, NULL, &#123;sa_handler=SIG_DFL, sa_mask=[], sa_flags=0&#125;, 8) = 0</span><br><span class="line">rt_sigaction(SIGRT_25, &#123;sa_handler=0x459560, sa_mask=~[], sa_flags=SA_RESTORER|SA_ONSTACK|SA_RESTART|SA_SIGINFO, sa_restorer=0x459690&#125;, NULL, 8) = 0</span><br><span class="line">rt_sigaction(SIGRT_26, NULL, &#123;sa_handler=SIG_DFL, sa_mask=[], sa_flags=0&#125;, 8) = 0</span><br><span class="line">rt_sigaction(SIGRT_26, &#123;sa_handler=0x459560, sa_mask=~[], sa_flags=SA_RESTORER|SA_ONSTACK|SA_RESTART|SA_SIGINFO, sa_restorer=0x459690&#125;, NULL, 8) = 0</span><br><span class="line">rt_sigaction(SIGRT_27, NULL, &#123;sa_handler=SIG_DFL, sa_mask=[], sa_flags=0&#125;, 8) = 0</span><br><span class="line">rt_sigaction(SIGRT_27, &#123;sa_handler=0x459560, sa_mask=~[], sa_flags=SA_RESTORER|SA_ONSTACK|SA_RESTART|SA_SIGINFO, sa_restorer=0x459690&#125;, NULL, 8) = 0</span><br><span class="line">rt_sigaction(SIGRT_28, NULL, &#123;sa_handler=SIG_DFL, sa_mask=[], sa_flags=0&#125;, 8) = 0</span><br><span class="line">rt_sigaction(SIGRT_28, &#123;sa_handler=0x459560, sa_mask=~[], sa_flags=SA_RESTORER|SA_ONSTACK|SA_RESTART|SA_SIGINFO, sa_restorer=0x459690&#125;, NULL, 8) = 0</span><br><span class="line">rt_sigaction(SIGRT_29, NULL, &#123;sa_handler=SIG_DFL, sa_mask=[], sa_flags=0&#125;, 8) = 0</span><br><span class="line">rt_sigaction(SIGRT_29, &#123;sa_handler=0x459560, sa_mask=~[], sa_flags=SA_RESTORER|SA_ONSTACK|SA_RESTART|SA_SIGINFO, sa_restorer=0x459690&#125;, NULL, 8) = 0</span><br><span class="line">rt_sigaction(SIGRT_30, NULL, &#123;sa_handler=SIG_DFL, sa_mask=[], sa_flags=0&#125;, 8) = 0</span><br><span class="line">rt_sigaction(SIGRT_30, &#123;sa_handler=0x459560, sa_mask=~[], sa_flags=SA_RESTORER|SA_ONSTACK|SA_RESTART|SA_SIGINFO, sa_restorer=0x459690&#125;, NULL, 8) = 0</span><br><span class="line">rt_sigaction(SIGRT_31, NULL, &#123;sa_handler=SIG_DFL, sa_mask=[], sa_flags=0&#125;, 8) = 0</span><br><span class="line">rt_sigaction(SIGRT_31, &#123;sa_handler=0x459560, sa_mask=~[], sa_flags=SA_RESTORER|SA_ONSTACK|SA_RESTART|SA_SIGINFO, sa_restorer=0x459690&#125;, NULL, 8) = 0</span><br><span class="line">rt_sigaction(SIGRT_32, NULL, &#123;sa_handler=SIG_DFL, sa_mask=[], sa_flags=0&#125;, 8) = 0</span><br><span class="line">rt_sigaction(SIGRT_32, &#123;sa_handler=0x459560, sa_mask=~[], sa_flags=SA_RESTORER|SA_ONSTACK|SA_RESTART|SA_SIGINFO, sa_restorer=0x459690&#125;, NULL, 8) = 0</span><br><span class="line">rt_sigprocmask(SIG_SETMASK, ~[], [], 8) = 0</span><br><span class="line"><span class="built_in">clone</span>(child_stack=0xc000062000, flags=CLONE_VM|CLONE_FS|CLONE_FILES|CLONE_SIGHAND|CLONE_THREAD|CLONE_SYSVSEM) = 30928</span><br><span class="line">rt_sigprocmask(SIG_SETMASK, [], NULL, 8) = 0</span><br><span class="line">rt_sigprocmask(SIG_SETMASK, ~[], [], 8) = 0</span><br><span class="line"><span class="built_in">clone</span>(child_stack=0xc000064000, flags=CLONE_VM|CLONE_FS|CLONE_FILES|CLONE_SIGHAND|CLONE_THREAD|CLONE_SYSVSEM) = 30929</span><br><span class="line">rt_sigprocmask(SIG_SETMASK, [], NULL, 8) = 0</span><br><span class="line">rt_sigprocmask(SIG_SETMASK, ~[], [], 8) = 0</span><br><span class="line"><span class="built_in">clone</span>(child_stack=0xc00005e000, flags=CLONE_VM|CLONE_FS|CLONE_FILES|CLONE_SIGHAND|CLONE_THREAD|CLONE_SYSVSEM) = 30930</span><br><span class="line">rt_sigprocmask(SIG_SETMASK, [], NULL, 8) = 0</span><br><span class="line">futex(0x60c2a8, FUTEX_WAIT_PRIVATE, 0, NULL) = 0</span><br><span class="line">rt_sigprocmask(SIG_SETMASK, ~[], [], 8) = 0</span><br><span class="line"><span class="built_in">clone</span>(child_stack=0xc000060000, flags=CLONE_VM|CLONE_FS|CLONE_FILES|CLONE_SIGHAND|CLONE_THREAD|CLONE_SYSVSEM) = 30932</span><br><span class="line">rt_sigprocmask(SIG_SETMASK, [], NULL, 8) = 0</span><br><span class="line">futex(0x60c2a8, FUTEX_WAIT_PRIVATE, 0, NULL) = 0</span><br><span class="line">readlinkat(AT_FDCWD, <span class="string">"/proc/self/exe"</span>, <span class="string">"/root/temp/temp/tcp-echo-server-"</span>..., 128) = 37</span><br><span class="line">fcntl(0, F_GETFL)                       = 0x2 (flags O_RDWR)</span><br><span class="line">futex(0xc0000524c8, FUTEX_WAKE_PRIVATE, 1) = 1</span><br><span class="line">mmap(NULL, 262144, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0) = 0x7ff9272ea000</span><br><span class="line">fcntl(1, F_GETFL)                       = 0x2 (flags O_RDWR)</span><br><span class="line">fcntl(2, F_GETFL)                       = 0x2 (flags O_RDWR)</span><br><span class="line">socket(AF_INET, SOCK_STREAM|SOCK_CLOEXEC|SOCK_NONBLOCK, IPPROTO_TCP) = 3</span><br><span class="line">close(3)                                = 0</span><br><span class="line">socket(AF_INET6, SOCK_STREAM|SOCK_CLOEXEC|SOCK_NONBLOCK, IPPROTO_TCP) = 3</span><br><span class="line">setsockopt(3, SOL_IPV6, IPV6_V6ONLY, [1], 4) = 0</span><br><span class="line"><span class="built_in">bind</span>(3, &#123;sa_family=AF_INET6, sin6_port=htons(0), inet_pton(AF_INET6, <span class="string">"::1"</span>, &amp;sin6_addr), sin6_flowinfo=htonl(0), sin6_scope_id=0&#125;, 28) = -1 EADDRNOTAVAIL (Cannot assign requested address)</span><br><span class="line">socket(AF_INET6, SOCK_STREAM|SOCK_CLOEXEC|SOCK_NONBLOCK, IPPROTO_TCP) = 4</span><br><span class="line">setsockopt(4, SOL_IPV6, IPV6_V6ONLY, [0], 4) = 0</span><br><span class="line"><span class="built_in">bind</span>(4, &#123;sa_family=AF_INET6, sin6_port=htons(0), inet_pton(AF_INET6, <span class="string">"::ffff:127.0.0.1"</span>, &amp;sin6_addr), sin6_flowinfo=htonl(0), sin6_scope_id=0&#125;, 28) = 0</span><br><span class="line">close(4)                                = 0</span><br><span class="line">close(3)                                = 0</span><br><span class="line">socket(AF_INET6, SOCK_STREAM|SOCK_CLOEXEC|SOCK_NONBLOCK, IPPROTO_IP) = 3</span><br><span class="line">setsockopt(3, SOL_IPV6, IPV6_V6ONLY, [0], 4) = 0</span><br><span class="line">setsockopt(3, SOL_SOCKET, SO_BROADCAST, [1], 4) = 0</span><br><span class="line">openat(AT_FDCWD, <span class="string">"/proc/sys/net/core/somaxconn"</span>, O_RDONLY|O_CLOEXEC) = 4</span><br><span class="line">epoll_create1(EPOLL_CLOEXEC)            = 5</span><br><span class="line">epoll_ctl(5, EPOLL_CTL_ADD, 4, &#123;EPOLLIN|EPOLLOUT|EPOLLRDHUP|EPOLLET, &#123;u32=657387272, u64=140708080971528&#125;&#125;) = 0</span><br><span class="line">fcntl(4, F_GETFL)                       = 0x8000 (flags O_RDONLY|O_LARGEFILE)</span><br><span class="line">fcntl(4, F_SETFL, O_RDONLY|O_NONBLOCK|O_LARGEFILE) = 0</span><br><span class="line"><span class="built_in">read</span>(4, <span class="string">"128\n"</span>, 65536)                 = 4</span><br><span class="line"><span class="built_in">read</span>(4, <span class="string">""</span>, 65532)                      = 0</span><br><span class="line">epoll_ctl(5, EPOLL_CTL_DEL, 4, 0xc0000a49a4) = 0</span><br><span class="line">close(4)                                = 0</span><br><span class="line">setsockopt(3, SOL_SOCKET, SO_REUSEADDR, [1], 4) = 0</span><br><span class="line"><span class="built_in">bind</span>(3, &#123;sa_family=AF_INET6, sin6_port=htons(9999), inet_pton(AF_INET6, <span class="string">"::"</span>, &amp;sin6_addr), sin6_flowinfo=htonl(0), sin6_scope_id=0&#125;, 28) = 0</span><br><span class="line">listen(3, 128)                          = 0</span><br><span class="line">epoll_ctl(5, EPOLL_CTL_ADD, 3, &#123;EPOLLIN|EPOLLOUT|EPOLLRDHUP|EPOLLET, &#123;u32=657387272, u64=140708080971528&#125;&#125;) = 0</span><br><span class="line">getsockname(3, &#123;sa_family=AF_INET6, sin6_port=htons(9999), inet_pton(AF_INET6, <span class="string">"::"</span>, &amp;sin6_addr), sin6_flowinfo=htonl(0), sin6_scope_id=0&#125;, [112-&gt;28]) = 0</span><br><span class="line">openat(AT_FDCWD, <span class="string">"/etc//localtime"</span>, O_RDONLY) = 4</span><br><span class="line"><span class="built_in">read</span>(4, <span class="string">"TZif2\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\0\3\0\0\0\3\0\0\0\0"</span>..., 4096) = 554</span><br><span class="line"><span class="built_in">read</span>(4, <span class="string">""</span>, 4096)                       = 0</span><br><span class="line">close(4)                                = 0</span><br><span class="line">write(2, <span class="string">"2020/04/15 10:30:01 tcp listenin"</span>..., 47) = 47</span><br><span class="line">accept4(3, 0xc000085bc0, [112], SOCK_CLOEXEC|SOCK_NONBLOCK) = -1 EAGAIN (Resource temporarily unavailable)</span><br><span class="line">epoll_pwait(5, [], 128, 0, NULL, 0)     = 0</span><br><span class="line">epoll_pwait(5, 0x7fffa12415e0, 128, -1, NULL, 0) = -1 EINTR (Interrupted system call)</span><br><span class="line">--- SIGWINCH &#123;si_signo=SIGWINCH, si_code=SI_KERNEL&#125; ---</span><br><span class="line">rt_sigreturn(&#123;mask=[]&#125;)                 = -1 EINTR (Interrupted system call)</span><br><span class="line">epoll_pwait(5, 0x7fffa12415e0, 128, -1, NULL, 0) = -1 EINTR (Interrupted system call)</span><br><span class="line">--- SIGWINCH &#123;si_signo=SIGWINCH, si_code=SI_KERNEL&#125; ---</span><br><span class="line">rt_sigreturn(&#123;mask=[]&#125;)                 = -1 EINTR (Interrupted system call)</span><br><span class="line">epoll_pwait(5, 0x7fffa12415e0, 128, -1, NULL, 0) = -1 EINTR (Interrupted system call)</span><br><span class="line">--- SIGWINCH &#123;si_signo=SIGWINCH, si_code=SI_KERNEL&#125; ---</span><br><span class="line">rt_sigreturn(&#123;mask=[]&#125;)                 = -1 EINTR (Interrupted system call)</span><br><span class="line">epoll_pwait(5, 0x7fffa12415e0, 128, -1, NULL, 0) = -1 EINTR (Interrupted system call)</span><br><span class="line">--- SIGWINCH &#123;si_signo=SIGWINCH, si_code=SI_KERNEL&#125; ---</span><br><span class="line">rt_sigreturn(&#123;mask=[]&#125;)                 = -1 EINTR (Interrupted system call)</span><br><span class="line">epoll_pwait(5, 0x7fffa12415e0, 128, -1, NULL, 0) = -1 EINTR (Interrupted system call)</span><br><span class="line">--- SIGWINCH &#123;si_signo=SIGWINCH, si_code=SI_KERNEL&#125; ---</span><br><span class="line">rt_sigreturn(&#123;mask=[]&#125;)                 = -1 EINTR (Interrupted system call)</span><br><span class="line">epoll_pwait(5, 0x7fffa12415e0, 128, -1, NULL, 0) = -1 EINTR (Interrupted system call)</span><br><span class="line">--- SIGWINCH &#123;si_signo=SIGWINCH, si_code=SI_KERNEL&#125; ---</span><br><span class="line">rt_sigreturn(&#123;mask=[]&#125;)                 = -1 EINTR (Interrupted system call)</span><br><span class="line">epoll_pwait(5, root</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>可以看到 134，137，140，144 行通过 <code>clone 系统调用</code> 创建新的线程</p>
+</li>
+<li><p>153，155 行分别调用 <code>socket系统调用</code> 创建了 socket，用于后续的 listen</p>
+<ul>
+<li>一个是ipv4（fd=3）</li>
+<li>一个是ipv6 (fd=4)</li>
+</ul>
+</li>
+<li><p>157，160 行分别调用了 <code>bind系统调用</code> 绑定监听的地址</p>
+</li>
+<li><p>167 行调用了 <code>epoll_create系统调用</code> 创建了 epoll 实例（fd = 5）</p>
+</li>
+<li><p>168，173，178 行分别调用 <code>epoll_ctl系统调用</code> </p>
+</li>
+<li><p>176 行调用了 <code>bind系统调用</code> 绑定9999端口</p>
+</li>
+<li><p>最后一行也可以看到调用了 <code>epoll_wait 系统调用</code> 等待连接</p>
+</li>
+</ul>
+
+      
+    </div>
+    <div class="article-footer">
+      <blockquote class="mt-2x">
+  <ul class="post-copyright list-unstyled">
+    
+    <li class="post-copyright-link hidden-xs">
+      <strong>本文链接：</strong>
+      <a href="https://overtalk.site/2020/04/15/linux-systemcall/" title="如何查看进程的系统调用" target="_blank" rel="external">https://overtalk.site/2020/04/15/linux-systemcall/</a>
+    </li>
+    
+    <li class="post-copyright-license">
+      <strong>版权声明： </strong> 本博客所有文章除特别声明外，均采用 <a href="http://creativecommons.org/licenses/by/4.0/deed.zh" target="_blank" rel="external">CC BY 4.0 CN协议</a> 许可协议。转载请注明出处！
+    </li>
+  </ul>
+</blockquote>
+
+
+<div class="panel panel-default panel-badger">
+  <div class="panel-body">
+    <figure class="media">
+      <div class="media-left">
+        <a href="https://github.com/overtalk" target="_blank" class="img-burn thumb-sm visible-lg">
+          <img src="/images/avatar.png" class="img-rounded w-full" alt="">
+        </a>
+      </div>
+      <div class="media-body">
+        <h3 class="media-heading"><a href="https://github.com/overtalk" target="_blank"><span class="text-dark">QinHan</span><small class="ml-1x">Game Developer &amp; Designer</small></a></h3>
+        <div>当你发现自己的才华撑不起野心时，就请安静下来学习吧！</div>
+      </div>
+    </figure>
+  </div>
+</div>
+
+
+    </div>
+  </article>
+  
+    
+  <section id="comments">
+  	
+           
+    
+  </section>
+
+
+  
+</div>
+
+  <nav class="bar bar-footer clearfix" data-stick-bottom>
+  <div class="bar-inner">
+  
+  <ul class="pager pull-left">
+    
+    <li class="prev">
+      <a href="/2020/04/23/cpp-interface/" title="c++ 实现 Go 中的 interface"><i class="icon icon-angle-left" aria-hidden="true"></i><span>&nbsp;&nbsp;上一篇</span></a>
+    </li>
+    
+    
+    <li class="next">
+      <a href="/2020/04/14/net-design/" title="如何糅合各种网络协议？"><span>下一篇&nbsp;&nbsp;</span><i class="icon icon-angle-right" aria-hidden="true"></i></a>
+    </li>
+    
+    
+  </ul>
+  
+  
+  <!-- Button trigger modal -->
+  <button type="button" class="btn btn-fancy btn-donate pop-onhover bg-gradient-warning" data-toggle="modal" data-target="#donateModal"><span>赏</span></button>
+  <!-- <div class="wave-icon wave-icon-danger btn-donate" data-toggle="modal" data-target="#donateModal">
+    <div class="wave-circle"><span class="icon"><i class="icon icon-bill"></i></span></div>
+  </div> -->
+  
+  
+  <div class="bar-right">
+    
+    <div class="share-component" data-sites="weibo,qq,wechat,facebook,twitter" data-mobile-sites="weibo,qq,qzone"></div>
+    
+  </div>
+  </div>
+</nav>
+  
+<!-- Modal -->
+<div class="modal modal-center modal-small modal-xs-full fade" id="donateModal" tabindex="-1" role="dialog">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content donate">
+      <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+      <div class="modal-body">
+        <div class="donate-box">
+          <div class="donate-head">
+            <p>感谢您的支持，我会继续努力的!</p>
+          </div>
+          <div class="tab-content">
+            <div role="tabpanel" class="tab-pane fade active in" id="alipay">
+              <div class="donate-payimg">
+                <img src="/images/donate/alipayimg.png" alt="扫码支持" title="扫一扫" />
+              </div>
+              <p class="text-muted mv">喜欢就收藏，疼爱就打赏！</p>
+              <p class="text-grey">支付宝扫一扫</p>
+            </div>
+            <div role="tabpanel" class="tab-pane fade" id="wechatpay">
+              <div class="donate-payimg">
+                <img src="/images/donate/wechatpayimg.png" alt="扫码支持" title="扫一扫" />
+              </div>
+              <p class="text-muted mv">喜欢就收藏，疼爱就打赏！</p>
+              <p class="text-grey">微信扫一扫</p>
+            </div>
+          </div>
+          <div class="donate-footer">
+            <ul class="nav nav-tabs nav-justified" role="tablist">
+              <li role="presentation" class="active">
+                <a href="#alipay" id="alipay-tab" role="tab" data-toggle="tab" aria-controls="alipay" aria-expanded="true"><i class="icon icon-alipay"></i> 支付宝</a>
+              </li>
+              <li role="presentation" class="">
+                <a href="#wechatpay" role="tab" id="wechatpay-tab" data-toggle="tab" aria-controls="wechatpay" aria-expanded="false"><i class="icon icon-wepay"></i> 微信支付</a>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+
+</main>
+
+  <footer class="footer" itemscope itemtype="http://schema.org/WPFooter">
+	
+	
+    <ul class="social-links">
+    	
+        <li><a href="https://github.com/overtalk" target="_blank" title="Github" data-toggle=tooltip data-placement=top><i class="icon icon-github"></i></a></li>
+        
+        <li><a href="/atom.xml" target="_blank" title="Rss" data-toggle=tooltip data-placement=top><i class="icon icon-rss"></i></a></li>
+        
+    </ul>
+
+    <div class="copyright">
+    	
+        <div class="publishby">
+        	Powered by <a href="https://hexo.io/" target="_blank"> Hexo </a>base on <a href="https://github.com/cofess/hexo-theme-pure" target="_blank">pure</a>.
+        </div>
+    </div>
+</footer>
+  <script src="//cdn.jsdelivr.net/npm/jquery@1.12.4/dist/jquery.min.js"></script>
+<script>
+window.jQuery || document.write('<script src="js/jquery.min.js"><\/script>')
+</script>
+<script src="/js/plugin.min.js"></script>
+<script src="/js/application.js"></script>
+
+    <script>
+(function (window) {
+    var INSIGHT_CONFIG = {
+        TRANSLATION: {
+            POSTS: '文章',
+            PAGES: '页面',
+            CATEGORIES: '分类',
+            TAGS: '标签',
+            UNTITLED: '(未命名)',
+        },
+        ROOT_URL: '/',
+        CONTENT_URL: '/content.json',
+    };
+    window.INSIGHT_CONFIG = INSIGHT_CONFIG;
+})(window);
+</script>
+<script src="/js/insight.js"></script>
+
+
+
+
+
+   
+<script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+
+
+
+   
+    
+  <!-- <link rel="stylesheet" href="https://unpkg.com/gitalk/dist/gitalk.css"> -->
+  <script src="//cdn.jsdelivr.net/npm/gitalk@1.4.0/dist/gitalk.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/blueimp-md5@2.10.0/js/md5.min.js"></script>
+  <script type="text/javascript">
+  var gitalk = new Gitalk({
+    clientID: '8b37930d2d91b16067d3',
+    clientSecret: '3e1cf0374a8d938b6e1d1c8239ff068ac5de5c96',
+    repo: 'overtalk.github.io',
+    owner: 'overtalk',
+    admin: ['overtalk'],
+    id: md5(location.pathname),
+    distractionFreeMode: true
+  })
+  gitalk.render('comments')
+  </script>
+
+      
+
+
+
+
+
+
+
+</body>
+</html>

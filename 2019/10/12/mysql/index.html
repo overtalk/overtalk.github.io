@@ -1,0 +1,906 @@
+<!DOCTYPE html>
+<html lang=zh>
+<head>
+  <meta charset="utf-8">
+  
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no, minimal-ui">
+  <meta name="renderer" content="webkit">
+  <meta http-equiv="Cache-Control" content="no-transform" />
+  <meta http-equiv="Cache-Control" content="no-siteapp" />
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <meta name="format-detection" content="telephone=no,email=no,adress=no">
+  <!-- Color theme for statusbar -->
+  <meta name="theme-color" content="#000000" />
+  <!-- 强制页面在当前窗口以独立页面显示,防止别人在框架里调用页面 -->
+  <meta http-equiv="window-target" content="_top" />
+  
+  
+  <title>mysql学习笔记 | Overtalk</title>
+  <meta name="description" content="MySQL架构 首先来一张 MySQL 的架构示意图   MySQL 是一个分层架构，包含 Server 层 和 存储引擎层 两部分，Server 层包括了连接器，查询缓存，分析器，优化器，执行器等，涵盖 MySQL 大多数核心服务功能，以及所有的内置函数，所有的跨存储引擎的功能都在这一层实现，不如存储过程，触发器，视图等。而存储引擎层负责数据的存储和提取，其架构模式是插件式的，支持 InnoDB">
+<meta name="keywords" content="mysql">
+<meta property="og:type" content="article">
+<meta property="og:title" content="mysql学习笔记">
+<meta property="og:url" content="https:&#x2F;&#x2F;overtalk.site&#x2F;2019&#x2F;10&#x2F;12&#x2F;mysql&#x2F;index.html">
+<meta property="og:site_name" content="QinHan&#39;s Site">
+<meta property="og:description" content="MySQL架构 首先来一张 MySQL 的架构示意图   MySQL 是一个分层架构，包含 Server 层 和 存储引擎层 两部分，Server 层包括了连接器，查询缓存，分析器，优化器，执行器等，涵盖 MySQL 大多数核心服务功能，以及所有的内置函数，所有的跨存储引擎的功能都在这一层实现，不如存储过程，触发器，视图等。而存储引擎层负责数据的存储和提取，其架构模式是插件式的，支持 InnoDB">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:image" content="https:&#x2F;&#x2F;overtalk.site&#x2F;images&#x2F;posts&#x2F;mysql&#x2F;mysql.png">
+<meta property="og:image" content="https:&#x2F;&#x2F;overtalk.site&#x2F;images&#x2F;posts&#x2F;mysql&#x2F;redo-log.png">
+<meta property="og:image" content="https:&#x2F;&#x2F;overtalk.site&#x2F;images&#x2F;posts&#x2F;mysql&#x2F;log-commit.png">
+<meta property="og:image" content="https:&#x2F;&#x2F;overtalk.site&#x2F;images&#x2F;posts&#x2F;mysql&#x2F;1.png">
+<meta property="og:image" content="https:&#x2F;&#x2F;overtalk.site&#x2F;images&#x2F;posts&#x2F;mysql&#x2F;2.png">
+<meta property="og:image" content="https:&#x2F;&#x2F;overtalk.site&#x2F;images&#x2F;posts&#x2F;mysql&#x2F;3.png">
+<meta property="og:image" content="https:&#x2F;&#x2F;overtalk.site&#x2F;images&#x2F;posts&#x2F;mysql&#x2F;4.png">
+<meta property="og:image" content="https:&#x2F;&#x2F;overtalk.site&#x2F;images&#x2F;posts&#x2F;mysql&#x2F;5.png">
+<meta property="og:updated_time" content="2022-07-19T07:53:37.897Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https:&#x2F;&#x2F;overtalk.site&#x2F;images&#x2F;posts&#x2F;mysql&#x2F;mysql.png">
+  <!-- Canonical links -->
+  <link rel="canonical" href="https://overtalk.site/2019/10/12/mysql/index.html">
+  
+    <link rel="alternate" href="/atom.xml" title="QinHan&#39;s Site" type="application/atom+xml">
+  
+  
+    <link rel="icon" href="/favicon.png" type="image/x-icon">
+  
+  <link rel="stylesheet" href="/css/style.css">
+  
+  
+  
+  
+    <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/gitalk@1.4.0/dist/gitalk.min.css">
+  
+</head>
+
+
+<body class="main-center theme-black" itemscope itemtype="http://schema.org/WebPage">
+  <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+  <div class="slimContent">
+    <div class="navbar-header">
+      
+      
+      <div class="profile-block text-center">
+        <a id="avatar" href="https://github.com/overtalk" target="_blank">
+          <img class="img-circle img-rotate" src="/images/avatar.png" width="200" height="200">
+        </a>
+        <h2 id="name" class="hidden-xs hidden-sm">QinHan</h2>
+        <h3 id="title" class="hidden-xs hidden-sm hidden-md">Game Developer &amp; Designer</h3>
+        <small id="location" class="text-muted hidden-xs hidden-sm"><i class="icon icon-map-marker"></i> Shanghai, China</small>
+      </div>
+      
+      <div class="search" id="search-form-wrap">
+
+    <form class="search-form sidebar-form">
+        <div class="input-group">
+            <input type="text" class="search-form-input form-control" placeholder="搜索" />
+            <span class="input-group-btn">
+                <button type="submit" class="search-form-submit btn btn-flat" onclick="return false;"><i class="icon icon-search"></i></button>
+            </span>
+        </div>
+    </form>
+    <div class="ins-search">
+  <div class="ins-search-mask"></div>
+  <div class="ins-search-container">
+    <div class="ins-input-wrapper">
+      <input type="text" class="ins-search-input" placeholder="想要查找什么..." x-webkit-speech />
+      <button type="button" class="close ins-close ins-selectable" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button>
+    </div>
+    <div class="ins-section-wrapper">
+      <div class="ins-section-container"></div>
+    </div>
+  </div>
+</div>
+
+
+</div>
+      <button class="navbar-toggle collapsed" type="button" data-toggle="collapse" data-target="#main-navbar" aria-controls="main-navbar" aria-expanded="false">
+        <span class="sr-only">Toggle navigation</span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+    </div>
+    <nav id="main-navbar" class="collapse navbar-collapse" itemscope itemtype="http://schema.org/SiteNavigationElement" role="navigation">
+      <ul class="nav navbar-nav main-nav menu-highlight">
+        
+        
+        <li class="menu-item menu-item-home">
+          <a href="/.">
+            
+            <i class="icon icon-home-fill"></i>
+            
+            <span class="menu-title">首页</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives">
+            
+            <i class="icon icon-archives-fill"></i>
+            
+            <span class="menu-title">归档</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories">
+            
+            <i class="icon icon-folder"></i>
+            
+            <span class="menu-title">分类</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags">
+            
+            <i class="icon icon-tags"></i>
+            
+            <span class="menu-title">标签</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-repository">
+          <a href="/repository">
+            
+            <i class="icon icon-project"></i>
+            
+            <span class="menu-title">项目</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-links">
+          <a href="/links">
+            
+            <i class="icon icon-friendship"></i>
+            
+            <span class="menu-title">友链</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about">
+            
+            <i class="icon icon-cup-fill"></i>
+            
+            <span class="menu-title">关于</span>
+          </a>
+        </li>
+        
+      </ul>
+      
+	
+    <ul class="social-links">
+    	
+        <li><a href="https://github.com/overtalk" target="_blank" title="Github" data-toggle=tooltip data-placement=top><i class="icon icon-github"></i></a></li>
+        
+        <li><a href="/atom.xml" target="_blank" title="Rss" data-toggle=tooltip data-placement=top><i class="icon icon-rss"></i></a></li>
+        
+    </ul>
+
+    </nav>
+  </div>
+</header>
+
+  
+    <aside class="sidebar" itemscope itemtype="http://schema.org/WPSideBar">
+  <div class="slimContent">
+    
+      <div class="widget">
+    <h3 class="widget-title">公告</h3>
+    <div class="widget-body">
+        <div id="board">
+            <div class="content">
+                <p>欢迎交流与分享经验!</p><p>邮箱：qinhan_shu@163.com</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">分类</h3>
+    <div class="widget-body">
+      <ul class="category-list"><li class="category-list-item"><a class="category-list-link" href="/categories/fragment/">fragment</a><span class="category-list-count">3</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/interview/">interview</a><span class="category-list-count">4</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/jewellery/">jewellery</a><span class="category-list-count">4</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/linux/">linux</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/minio/">minio</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/mongo/">mongo</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/rtc/">rtc</a><span class="category-list-count">3</span><ul class="category-list-child"><li class="category-list-item"><a class="category-list-link" href="/categories/rtc/book/">book</a><span class="category-list-count">1</span><ul class="category-list-child"><li class="category-list-item"><a class="category-list-link" href="/categories/rtc/book/freeswitch/">freeswitch</a><span class="category-list-count">1</span></li></ul></li></ul></li><li class="category-list-item"><a class="category-list-link" href="/categories/%E7%BC%96%E7%A8%8B/">编程</a><span class="category-list-count">141</span><ul class="category-list-child"><li class="category-list-item"><a class="category-list-link" href="/categories/%E7%BC%96%E7%A8%8B/%E6%B8%B8%E6%88%8F/">游戏</a><span class="category-list-count">1</span></li></ul></li><li class="category-list-item"><a class="category-list-link" href="/categories/%E9%9A%8F%E7%AC%94/">随笔</a><span class="category-list-count">2</span></li></ul>
+    </div>
+  </div>
+
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">标签</h3>
+    <div class="widget-body">
+      <ul class="tag-list" itemprop="keywords"><li class="tag-list-item"><a class="tag-list-link" href="/tags/CI-CD/" rel="tag">CI/CD</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Docker/" rel="tag">Docker</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Golang/" rel="tag">Golang</a><span class="tag-list-count">35</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Nagle/" rel="tag">Nagle</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Network/" rel="tag">Network</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Redis/" rel="tag">Redis</a><span class="tag-list-count">6</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Redis%E5%A4%87%E4%BB%BD/" rel="tag">Redis备份</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Shadowsocks/" rel="tag">Shadowsocks</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Socks5/" rel="tag">Socks5</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/algorithm/" rel="tag">algorithm</a><span class="tag-list-count">8</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/clion/" rel="tag">clion</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/cpp/" rel="tag">cpp</a><span class="tag-list-count">50</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/docker/" rel="tag">docker</a><span class="tag-list-count">3</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/dw/" rel="tag">dw</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/endian/" rel="tag">endian</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/epoll/" rel="tag">epoll</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/freeswitch/" rel="tag">freeswitch</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/git/" rel="tag">git</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/gpg/" rel="tag">gpg</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/interview/" rel="tag">interview</a><span class="tag-list-count">4</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/io/" rel="tag">io</a><span class="tag-list-count">3</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/ip/" rel="tag">ip</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/iptables/" rel="tag">iptables</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/k8s/" rel="tag">k8s</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/kernal/" rel="tag">kernal</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/linux/" rel="tag">linux</a><span class="tag-list-count">8</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/loadbalance/" rel="tag">loadbalance</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/lock-free/" rel="tag">lock-free</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/lua/" rel="tag">lua</a><span class="tag-list-count">9</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/mac/" rel="tag">mac</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/mongo/" rel="tag">mongo</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/mysql/" rel="tag">mysql</a><span class="tag-list-count">3</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/network/" rel="tag">network</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/python/" rel="tag">python</a><span class="tag-list-count">3</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/recastnavigation/" rel="tag">recastnavigation</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/regex/" rel="tag">regex</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/rtc/" rel="tag">rtc</a><span class="tag-list-count">3</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/service-mesh/" rel="tag">service mesh</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/shadowsocks/" rel="tag">shadowsocks</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/shell/" rel="tag">shell</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/ssh/" rel="tag">ssh</a><span class="tag-list-count">3</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/systemcall/" rel="tag">systemcall</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/systemd/" rel="tag">systemd</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/tcp/" rel="tag">tcp</a><span class="tag-list-count">6</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E4%B8%AA%E4%BA%BA%E7%BD%91%E7%9B%98/" rel="tag">个人网盘</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%B9%B6%E5%8F%91/" rel="tag">并发</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E6%B8%B8%E6%88%8F/" rel="tag">游戏</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E9%9A%8F%E7%AC%94/" rel="tag">随笔</a><span class="tag-list-count">2</span></li></ul>
+    </div>
+  </div>
+
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">标签云</h3>
+    <div class="widget-body tagcloud">
+      <a href="/tags/CI-CD/" style="font-size: 13px;">CI/CD</a> <a href="/tags/Docker/" style="font-size: 13px;">Docker</a> <a href="/tags/Golang/" style="font-size: 13.88px;">Golang</a> <a href="/tags/Nagle/" style="font-size: 13px;">Nagle</a> <a href="/tags/Network/" style="font-size: 13px;">Network</a> <a href="/tags/Redis/" style="font-size: 13.5px;">Redis</a> <a href="/tags/Redis%E5%A4%87%E4%BB%BD/" style="font-size: 13px;">Redis备份</a> <a href="/tags/Shadowsocks/" style="font-size: 13px;">Shadowsocks</a> <a href="/tags/Socks5/" style="font-size: 13px;">Socks5</a> <a href="/tags/algorithm/" style="font-size: 13.63px;">algorithm</a> <a href="/tags/clion/" style="font-size: 13px;">clion</a> <a href="/tags/cpp/" style="font-size: 14px;">cpp</a> <a href="/tags/docker/" style="font-size: 13.25px;">docker</a> <a href="/tags/dw/" style="font-size: 13px;">dw</a> <a href="/tags/endian/" style="font-size: 13px;">endian</a> <a href="/tags/epoll/" style="font-size: 13px;">epoll</a> <a href="/tags/freeswitch/" style="font-size: 13px;">freeswitch</a> <a href="/tags/git/" style="font-size: 13px;">git</a> <a href="/tags/gpg/" style="font-size: 13px;">gpg</a> <a href="/tags/interview/" style="font-size: 13.38px;">interview</a> <a href="/tags/io/" style="font-size: 13.25px;">io</a> <a href="/tags/ip/" style="font-size: 13.13px;">ip</a> <a href="/tags/iptables/" style="font-size: 13px;">iptables</a> <a href="/tags/k8s/" style="font-size: 13px;">k8s</a> <a href="/tags/kernal/" style="font-size: 13px;">kernal</a> <a href="/tags/linux/" style="font-size: 13.63px;">linux</a> <a href="/tags/loadbalance/" style="font-size: 13.13px;">loadbalance</a> <a href="/tags/lock-free/" style="font-size: 13px;">lock-free</a> <a href="/tags/lua/" style="font-size: 13.75px;">lua</a> <a href="/tags/mac/" style="font-size: 13.13px;">mac</a> <a href="/tags/mongo/" style="font-size: 13px;">mongo</a> <a href="/tags/mysql/" style="font-size: 13.25px;">mysql</a> <a href="/tags/network/" style="font-size: 13px;">network</a> <a href="/tags/python/" style="font-size: 13.25px;">python</a> <a href="/tags/recastnavigation/" style="font-size: 13px;">recastnavigation</a> <a href="/tags/regex/" style="font-size: 13px;">regex</a> <a href="/tags/rtc/" style="font-size: 13.25px;">rtc</a> <a href="/tags/service-mesh/" style="font-size: 13px;">service mesh</a> <a href="/tags/shadowsocks/" style="font-size: 13px;">shadowsocks</a> <a href="/tags/shell/" style="font-size: 13.13px;">shell</a> <a href="/tags/ssh/" style="font-size: 13.25px;">ssh</a> <a href="/tags/systemcall/" style="font-size: 13.13px;">systemcall</a> <a href="/tags/systemd/" style="font-size: 13px;">systemd</a> <a href="/tags/tcp/" style="font-size: 13.5px;">tcp</a> <a href="/tags/%E4%B8%AA%E4%BA%BA%E7%BD%91%E7%9B%98/" style="font-size: 13px;">个人网盘</a> <a href="/tags/%E5%B9%B6%E5%8F%91/" style="font-size: 13px;">并发</a> <a href="/tags/%E6%B8%B8%E6%88%8F/" style="font-size: 13px;">游戏</a> <a href="/tags/%E9%9A%8F%E7%AC%94/" style="font-size: 13.13px;">随笔</a>
+    </div>
+  </div>
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">归档</h3>
+    <div class="widget-body">
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2022/07/">七月 2022</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/02/">二月 2021</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/01/">一月 2021</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2020/11/">十一月 2020</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2020/10/">十月 2020</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2020/08/">八月 2020</a><span class="archive-list-count">2</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2020/07/">七月 2020</a><span class="archive-list-count">15</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2020/06/">六月 2020</a><span class="archive-list-count">3</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2020/05/">五月 2020</a><span class="archive-list-count">6</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2020/04/">四月 2020</a><span class="archive-list-count">14</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2020/03/">三月 2020</a><span class="archive-list-count">16</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2020/02/">二月 2020</a><span class="archive-list-count">15</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2020/01/">一月 2020</a><span class="archive-list-count">13</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2019/12/">十二月 2019</a><span class="archive-list-count">20</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2019/11/">十一月 2019</a><span class="archive-list-count">6</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2019/10/">十月 2019</a><span class="archive-list-count">25</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2019/09/">九月 2019</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2019/08/">八月 2019</a><span class="archive-list-count">2</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2019/07/">七月 2019</a><span class="archive-list-count">9</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2019/04/">四月 2019</a><span class="archive-list-count">2</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2019/03/">三月 2019</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2018/11/">十一月 2018</a><span class="archive-list-count">9</span></li></ul>
+    </div>
+  </div>
+
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">最新文章</h3>
+    <div class="widget-body">
+      <ul class="recent-post-list list-unstyled no-thumbnail">
+        
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                
+              </p>
+              <p class="item-title">
+                <a href="/2022/07/19/bitmap/" class="title">bitmap</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2022-07-19T15:47:57.000Z" itemprop="datePublished">2022-07-19</time>
+              </p>
+            </div>
+          </li>
+          
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                <a class="category-link" href="/categories/%E7%BC%96%E7%A8%8B/">编程</a>
+              </p>
+              <p class="item-title">
+                <a href="/2021/02/02/recast-1/" class="title">导航网格-基础概念&amp;数据结构</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2021-02-02T16:38:43.000Z" itemprop="datePublished">2021-02-02</time>
+              </p>
+            </div>
+          </li>
+          
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                <a class="category-link" href="/categories/mongo/">mongo</a>
+              </p>
+              <p class="item-title">
+                <a href="/2021/01/19/mongo-metas/" class="title">mongo 杂记</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2021-01-19T10:22:54.000Z" itemprop="datePublished">2021-01-19</time>
+              </p>
+            </div>
+          </li>
+          
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                <a class="category-link" href="/categories/%E7%BC%96%E7%A8%8B/">编程</a>
+              </p>
+              <p class="item-title">
+                <a href="/2020/11/08/py-attribute/" class="title">Python 如何查找属性</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2020-11-08T15:21:28.000Z" itemprop="datePublished">2020-11-08</time>
+              </p>
+            </div>
+          </li>
+          
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                <a class="category-link" href="/categories/%E7%BC%96%E7%A8%8B/">编程</a>
+              </p>
+              <p class="item-title">
+                <a href="/2020/10/10/network-tcp-optimization/" class="title">Linux TCP/IP 性能调优</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2020-10-10T03:51:46.000Z" itemprop="datePublished">2020-10-10</time>
+              </p>
+            </div>
+          </li>
+          
+      </ul>
+    </div>
+  </div>
+  
+
+    
+  </div>
+</aside>
+
+  
+  
+<main class="main" role="main">
+  <div class="content">
+  <article id="post-mysql" class="article article-type-post" itemscope itemtype="http://schema.org/BlogPosting">
+    
+    <div class="article-header">
+      
+        
+  
+    <h1 class="article-title" itemprop="name">
+      mysql学习笔记
+    </h1>
+  
+
+      
+      <div class="article-meta">
+        <span class="article-date">
+    <i class="icon icon-calendar-check"></i>
+	<a href="/2019/10/12/mysql/" class="article-date">
+	  <time datetime="2019-10-12T11:04:16.000Z" itemprop="datePublished">2019-10-12</time>
+	</a>
+</span>
+        
+  <span class="article-category">
+    <i class="icon icon-folder"></i>
+    <a class="article-category-link" href="/categories/%E7%BC%96%E7%A8%8B/">编程</a>
+  </span>
+
+        
+  <span class="article-tag">
+    <i class="icon icon-tags"></i>
+	<a class="article-tag-link" href="/tags/mysql/" rel="tag">mysql</a>
+  </span>
+
+
+        
+	<span class="article-read hidden-xs">
+	    <i class="icon icon-eye-fill" aria-hidden="true"></i>
+	    <span id="busuanzi_container_page_pv">
+			<span id="busuanzi_value_page_pv">0</span>
+		</span>
+	</span>
+
+
+        <span class="post-comment"><i class="icon icon-comment"></i> <a href="/2019/10/12/mysql/#comments" class="article-comment-link">评论</a></span>
+        
+      </div>
+    </div>
+    <div class="article-entry marked-body" itemprop="articleBody">
+      
+        <h1 id="MySQL架构"><a href="#MySQL架构" class="headerlink" title="MySQL架构"></a>MySQL架构</h1><ul>
+<li>首先来一张 MySQL 的架构示意图<br><img src="/images/posts/mysql/mysql.png" alt="mysql">  </li>
+<li>MySQL 是一个分层架构，包含 Server 层 和 存储引擎层 两部分，Server 层包括了连接器，查询缓存，分析器，优化器，执行器等，涵盖 MySQL 大多数核心服务功能，以及所有的内置函数，所有的跨存储引擎的功能都在这一层实现，不如存储过程，触发器，视图等。而存储引擎层负责数据的存储和提取，其架构模式是插件式的，支持 InnoDB、MyISAM 、Memory 等。InnoDB 从 MySQL5.5.5 版本开始成为了默认存储引擎。</li>
+</ul>
+<h2 id="连接器"><a href="#连接器" class="headerlink" title="连接器"></a>连接器</h2><ul>
+<li><p>在进行所有的操作之前，我们会先进行连接数据库，例如执行命令：mysql -h 127.0.0.1 -u root -P 3306 -p，紧接着输入密码，这个时候连接器会执行密码验证和权限读取</p>
+</li>
+<li><p>连接成功之后，如果没有后续动作，这个连接就处于空闲状态（show processlist Command 列为 Sleep），如果客户端太长时间没有活动，连接器就会自动将其断开，这个时间是由 wait_timeout 参数控制，默认为 8 小时。</p>
+</li>
+<li><p>需要注意的是，MySQL 建立连接的过程还是较为繁琐的，首先必要的 TCP 三次握手，还有权限验证查询等，因此我们应该尽量使用长连接，也即是客户端的查询请求尽可能在一个连接上面，不要执行一次操作就断开重新连接一次。但是在使用长连接之后，MySQL 的内存又是涨得很快，这是因为 MySQL 在执行过程中临时使用的内存是管理在连接对象里面的， 而且这些连接占用的内存只有在连接断开的时候才会被释放。所以长连接累计可能会导致 MySQL 被系统强行 OOM，解决方案可以参考：</p>
+<ul>
+<li>定期断开长连接，使用一段时间或者程序里面判断执行过一个占用内存的大查询后，断开连接然后重连。</li>
+<li>如果使用的是 MySQL5.7 以上的版本，可以在每次执行一个较大的操作后，通过执行 mysql_rest_connection 来重新初始化连接资源。这个过程不会做权限验证，但是会将连接恢复到刚刚创建完的时候。</li>
+</ul>
+</li>
+</ul>
+<h2 id="查询缓存"><a href="#查询缓存" class="headerlink" title="查询缓存"></a>查询缓存</h2><ul>
+<li>这个功能 MySQL 5.7.20 就弃用了。</li>
+</ul>
+<h2 id="分析器"><a href="#分析器" class="headerlink" title="分析器"></a>分析器</h2><ul>
+<li><p>在执行语句之前，MySQL 首先必须知道本次操作的意图，所以需要对 SQL 做解析，分析器会做词法分析，分析输入的由空格组成的每个字符串代表什么。例如，当你输入查询语句：select ID from T，MySQL 会从这个语句根据 select 识别出这是一个查询语句，将 ID 翻译成表 T 的一个列。做完了这些识别之后，MySQL 就要做语法分析，语法分析根据语法规则，判断输入的SQL语句是否满足 MySQL 语法。</p>
+</li>
+<li><p>如果输入不对，大概就是下面这样的一个提示：ERROR 1064 (42000): You have an error in your SQL syntax;。</p>
+</li>
+</ul>
+<h2 id="优化器"><a href="#优化器" class="headerlink" title="优化器"></a>优化器</h2><ul>
+<li>经过分析器的意图识别之后，MySQL 就知道你要做什么了，在开始执行之前，还要优化一下，比如在表里面有多个索引的时候决定使用哪个索引，或者在一个语句有多表关联的时候，决定各个表的连接顺序。</li>
+</ul>
+<h2 id="执行器"><a href="#执行器" class="headerlink" title="执行器"></a>执行器</h2><ul>
+<li><p>经过前面的步骤，MySQL 已经知道你要做什么，紧接着就是执行语句，但是开始执行之前，要先判断一下当前连接的用户对这个表有没有执行的权限，没有就会返回没有权限的错误</p>
+</li>
+<li><p>如果有权限，就打开表，根据之前已经制定好的查询计划去调用这个表存储引擎的接口读取数据，比如如果上面的例子中，如果 表 T 中 ID 列没有索引，那么执行操作如下：</p>
+<ul>
+<li>调用 InnoDB 引擎接口取这个表的第一行，判断 ID 值是不是 10，如果不是则跳过，如果是则将这行存在结果集中；</li>
+<li>调用引擎接口取“下一行”，重复相同的判断逻辑，直到取到这个表的最后一行。</li>
+<li>执行器将上述遍历过程中所有满足条件的行组成的记录集作为结果集返回给客户端。</li>
+</ul>
+</li>
+<li><p>到这里，就算是这个语句执行完了。</p>
+</li>
+</ul>
+<h2 id="日志系统"><a href="#日志系统" class="headerlink" title="日志系统"></a>日志系统</h2><ul>
+<li>查询语句的过程更新语句都会走一遍，除此之外，更新流程还涉及两个重要的日志模块：redo log（重做日志）和 binlog （归档日志）</li>
+</ul>
+<h3 id="重做日志（redo-log）-物理日志"><a href="#重做日志（redo-log）-物理日志" class="headerlink" title="重做日志（redo log） 物理日志"></a>重做日志（redo log） 物理日志</h3><ul>
+<li><p>在 MySQL 中，并不是每一次更新都会写入磁盘，因为如果这样做，就得涉及到从磁盘找到那条记录，然后更新，整个 IO 成本，查找成本相当高。为了解决这个问题，MySQL 设计者使用了一种叫做 WAL （Write-Ahead-Logging）的技术，它的关键点技术先写日志，再写磁盘。具体来说，当有一条记录需要更新的时候， InnoDB 引擎会把记录写到 redo log 里，并且更新内存，这个时候就算更新完成了。同时，InnoDB 引擎会在适当的时候，将这个记录更新到磁盘，而这个更新操作往往是在系统比较空闲的时候</p>
+</li>
+<li><p>InnoDB 的 redo log 是固定大小的，由变量 innodb_log_file_size 和 innodb_log_files_in_group 设置，默认是2个48GBd的文件，它被设定为从头开始写，写到末尾由从头循环写，如下图所示：<br><img src="/images/posts/mysql/redo-log.png" alt="redo-log">  </p>
+</li>
+<li><p>write pos 记录当前的位置，一边写一遍后移，写到第3号我呢就爱你末尾后就回到第0号文件开头，checkpoint 是当前要查出的位置，也是往后推移并且循环的，擦除记录前要把记录更新到磁盘。write pos 和 checkpoint 之间的绿色位置表示可以用来记录新的操作。如果 write pos 追上 checkpoint，这个时候不再执行更新操作，需要停下来擦掉一部分记录，腾出空间。</p>
+</li>
+<li><p>有了 redo-log，InnoDB 就可以做到即使数据库异常重启，之前提交的记录也不会丢失，这个能力称之为 crash-safe。</p>
+</li>
+</ul>
+<h3 id="归档日志-Binary-Log-逻辑日志"><a href="#归档日志-Binary-Log-逻辑日志" class="headerlink" title="归档日志 (Binary Log) 逻辑日志"></a>归档日志 (Binary Log) 逻辑日志</h3><ul>
+<li><p>MySQL 从整体架构上来说，分为 Server 层和存储层，前者负责 MySQL 功能相关，后者负责数据存储。前面所说的 redo-log 就是 InnoDB 引擎特有的日志，而 Server 层也有自己的日志，叫做 Binary Log，简称：binlog。</p>
+</li>
+<li><p>会有两份日志的重要原因是最开始 MySQL 里并没有 InnoDB 引擎。MySQL 自带的引擎是 MyISAM，但是 MyISAM 没有 crash-safe 的能力，binlog 日志只能用于归档。而 InnoDB 是另一个公司以插件形式引入 MySQL 的，既然只依靠 binlog 是没有 crash-safe 能力的，所以 InnoDB 使用另外一套日志系统——也就是 redo log 来实现 crash-safe 能力。</p>
+</li>
+<li><p>对比下这两个日志的不同点：</p>
+<ul>
+<li>redo log 是 InnoDB 引擎特有的；binlog 是 MySQL 的 Server 层实现的，所有引擎都可以使用。</li>
+<li>redo log 是物理日志，记录的是“在某个数据页上做了什么修改”；binlog 是逻辑日志，记录的是这个语句的原始逻辑，比如“给 ID=2 这一行的 c 字段加 1 ”。</li>
+<li>redo log 是循环写的，空间固定会用完；binlog 是可以追加写入的。“追加写”是指 binlog 文件写到一定大小后会切换到下一个，并不会覆盖以前的日志。</li>
+</ul>
+</li>
+<li><p>我们再看 执行器和 InnoDB 是如何处理这个 SQL的： update T set c=c+1 where ID=2;</p>
+<ul>
+<li>执行器先找引擎取 ID=2 这一行。ID 是主键，引擎直接用树搜索找到这一行。如果 ID=2 这一行所在的数据页本来就在内存中，就直接返回给执行器；否则，需要先从磁盘读入内存，然后再返回。</li>
+<li>执行器拿到引擎给的行数据，把这个值加上 1，比如原来是 N，现在就是 N+1，得到新的一行数据，再调用引擎接口写入这行新数据。</li>
+<li>引擎将这行新数据更新到内存中，同时将这个更新操作记录到 redo log 里面，此时 redo log 处于 prepare 状态。然后告知执行器执行完成了，随时可以提交事务。</li>
+<li>执行器生成这个操作的 binlog，并把 binlog 写入磁盘。</li>
+<li>执行器调用引擎的提交事务接口，引擎把刚刚写入的 redo log 改成提交（commit）状态，更新完成。<br><img src="/images/posts/mysql/log-commit.png" alt="log-commit">  </li>
+</ul>
+</li>
+<li><p>有了 binlog，即使在误删数据之后，结合备份数据库，可以做到数据恢复。例如，如果我们的数据库一天一次备份，保留15天之内的 binlog，那么按道理说我们可以恢复到半个月以内的任意一个时间点。日志提交分为两个阶段，主要是为了防止在日志提交期间，MySQL 奔溃恢复，binlog 和 redolog 不一致，在使用 binlog 恢复数据的时候，造成数据不一致。</p>
+</li>
+<li><p>另外，建议将参数 innodb_flush_log_at_trx_commit 和 sync_binlog 都设置为1，表示在每次事务提交的时候，将 redolog 和 binlog 都持久化到磁盘。</p>
+</li>
+</ul>
+<h1 id="MySQL锁"><a href="#MySQL锁" class="headerlink" title="MySQL锁"></a>MySQL锁</h1><ul>
+<li>数据库锁设计的初衷是处理并发问题，作为多用户共享的资源，当出现并发访问的时候，数据库是需要合理地控制资源的访问规则，而锁就是来实现这些访问规则的重要数据结构。根据加锁的范围，MySQL 里面锁的可以分为全局锁，表级锁和行锁三类</li>
+</ul>
+<h2 id="全局锁"><a href="#全局锁" class="headerlink" title="全局锁"></a>全局锁</h2><ul>
+<li><p>全局锁就是对整个数据库实例加锁，MySQL提供了一个加全局读锁的方法，命令式：flush tables with read lock(FTWRL)。当你让整个库处于只读状态的时候，可以使用这个命令，之后其他线程的以下语句会被阻塞：数据更新语句（数据的增改删）、数据定义语句（包括建表，修改表结构等）和更新类事务的提交语句。</p>
+</li>
+<li><p>全局库的典型使用场景是，做全库逻辑备份，也就是把整库每个表都 select 出来成文本。让个库都处于只读状态是很危险的：</p>
+<ul>
+<li>如果在主库上做备份，那么备份期间都不能执行更新，业务基本上就得停摆；</li>
+<li>如果在从库上备份，那么备份期间从库不能执行主库同步过来的 binlog，会导致主从延迟。</li>
+</ul>
+</li>
+<li><p>为了解决 FTWRL 期间不能写入的问题，MySQL 有用于做逻辑备份的工具：mysqldump，当mysqldump 使用 –single-transaction 参数的时候，导数据之前会启动事务，并且设置隔离级别为可重复读，而由于 MVCC 的支持，这个过程中数据是可以正常更新的。但是这个需要引擎支持这个隔离级别，所以，single-transaction 方法适用于所有表使用事务引擎的库。如果有的表使用了不支持事务的引擎，那么备份就只能通过 FTWRL 的方法，这也是替换 MyISAM 为了 InnoDB 的原因之一。除了 FTWRL 的方法之外，还可以配置 InnoDB 用于只读，详见 Configuring InnoDB for Read-Only Operation。可以使用命令 unlock tables 释放 FTWRL 添加的全局读锁。</p>
+</li>
+</ul>
+<h2 id="表级锁"><a href="#表级锁" class="headerlink" title="表级锁"></a>表级锁</h2><ul>
+<li>MySQL 有两种表级锁，一种是表锁，一种是元数据锁（meta data lock, MDL）。</li>
+</ul>
+<h3 id="表锁"><a href="#表锁" class="headerlink" title="表锁"></a>表锁</h3><ul>
+<li>锁表与 FTWRL 类似，可以使用 unlock tables 主动释放锁，也可以在客户端断开的时候释放锁。需要注意的是，lock tables 除了限制别的线程读写外，也限定了本线程接下来的操作对象。举个例子来说，如果在某个线程中执行 lock table t1 read, t2 write，那么其他线程写 t1，读 t2 都会被阻塞，同时，在线程A执行 unlock tables 命令之前，也只能读 t1, 写 t2。在还没有更细粒度锁出现的时候，锁表是常用的处理并发方式。对于 InnoDB 这种支持行锁的引擎来说，一般不使用 lock tables 命令控制并发。</li>
+</ul>
+<h3 id="元数据锁"><a href="#元数据锁" class="headerlink" title="元数据锁"></a>元数据锁</h3><ul>
+<li><p>另一类表级锁是 MDL（meta data lock），MDL 不需要显示使用，在访问换一个表的时候会自动加上，作用是保证读写的正确性。想象一下，如果一个查询正在遍历一个表中的数据，而执行期间另一个线程对这个表结构做更改，删了一列，肯定是不行的。</p>
+</li>
+<li><p>MySQL 5.5 版本中引入了 MDL，当对一个表做增删改查的时候，加 MDL 读锁，当要做对表结构变更的操作的时候，加 MDL 写锁。</p>
+</li>
+<li><p>读锁之间不互斥，因此可以多线程对同一张表增删改查；</p>
+</li>
+<li><p>读写锁之间，写锁之间是互斥的，是用来保证表结构的安全性。如果有两个线程同时给一个表加字段，其中一个要等另一个执行完才能执行；</p>
+</li>
+<li><p>虽然 MDL 锁是系统默认会加的，但却是你不能忽略的一个机制。比如下面这个例子，我经常看到有人掉到这个坑里：给一个小表加个字段，导致整个库挂了。你肯定知道，给一个表加字段，或者修改字段，或者加索引，需要扫描全表的数据。在对大表操作的时候，你肯定会特别小心，以免对线上服务造成影响。而实际上，即使是小表，操作不慎也会出问题。我们来看一下下面的操作序列，假设表 t 是一个小表。<br><img src="/images/posts/mysql/1.png" alt="1">  </p>
+</li>
+<li><p>我们可以看到 session A 先启动，这时候会对表 t 加一个 MDL 读锁。由于 session B 需要的也是 MDL 读锁，因此可以正常执行。之后 session C 会被 blocked，是因为 session A 的 MDL 读锁还没有释放，而 session C 需要 MDL 写锁，因此只能被阻塞。如果只有 session C 自己被阻塞还没什么关系，但是之后所有要在表 t 上新申请 MDL 读锁的请求也会被 session C 阻塞。前面我们说了，所有对表的增删改查操作都需要先申请 MDL 读锁，就都被锁住，等于这个表现在完全不可读写了。如果某个表上的查询语句频繁，而且客户端有重试机制，也就是说超时后会再起一个新 session 再请求的话，这个库的线程很快就会爆满。你现在应该知道了，事务中的 MDL 锁，在语句执行开始时申请，但是语句结束后并不会马上释放，而会等到整个事务提交后再释放。</p>
+</li>
+</ul>
+<h2 id="行锁"><a href="#行锁" class="headerlink" title="行锁"></a>行锁</h2><ul>
+<li><p>行锁是在存储引擎层由各个存储引擎自己实现的，但是并非所有的存储引擎都支持，MyISAM 引擎就不支持行锁。不支持行锁意味着并发控制只能靠表级锁，对于使用这种引擎的表，同一张表同一个时刻只能有一个更新在执行，这回影响业务并发度。InnoDB 支持行锁，这也是被作为默认引擎的原因之一。</p>
+</li>
+<li><p>行锁就是针对数据表中行记录的锁，这个很好理解，比如事务 A 更新了一行，而这个时候 B 事务也要更新这一行，那么必须等待 A 事务执行完成后才能进行。</p>
+</li>
+<li><p>对于下面的例子，事务 B 的执行会是什么样子呢？（假设 id 是表 t 的主键）<br><img src="/images/posts/mysql/2.png" alt="2"> </p>
+</li>
+<li><p>由于A事务在执行过程中持有两个记录的行锁，而且都是在 commit 的时候释放的。也就是说 在 InnoDB 事务中，行锁是在需要的时候才加上的，但并不是不需要了就立刻释放，而是要等到事务结束才释放，这个就是两阶段协议。基于这个设定，我们应该得出结论，如果你的事务中需要锁多个行，要把最可能造成锁冲突，最可能影响并发度的锁尽量往后放。</p>
+</li>
+</ul>
+<h1 id="死锁和死锁检测"><a href="#死锁和死锁检测" class="headerlink" title="死锁和死锁检测"></a>死锁和死锁检测</h1><ul>
+<li><p>当并发系统中不同线程出现资源循环依赖，涉及的线程都在等待别的线程释放资源的时，就会导致这几个线程都进入无限等待的时候，成为死锁，我们举个例子说明情况。<br><img src="/images/posts/mysql/3.png" alt="3"> </p>
+</li>
+<li><p>这个时候，A事务在等待B事务释放 id=2 这行的锁，而 B事务在等待A事务释放 id=1 这行的锁，事务A和事务B互相等待对方的资源释放，就进入了死锁状态。当出现死锁以后，有两种策略：</p>
+<ul>
+<li>直接进入等待，直到超时，超时时间通过参数 innodb_lock_wait_timeout 控制。</li>
+<li>发起死锁检测，发现出现死锁后，主动回滚死锁链条中的某一个事务，让其他事务得以继续执行，innodb_deadlock_detect 用于开启这个功能。</li>
+</ul>
+</li>
+<li><p>在 InnoDB 中，innodb_lock_wait_timeout 的默认值是 50s，意味着如果采用第一个策略，当出现死锁以后，第一个被锁住的线程要过 50s 才会超时退出，然后其他线程才有可能继续执行。对于在线服务来说，这个等待时间往往是无法接受的。但是，我们又不可能直接把这个时间设置成一个很小的值，比如 1s。这样当出现死锁的时候，确实很快就可以解开，但如果不是死锁，而是简单的锁等待呢？所以，超时时间设置太短的话，会出现很多误伤。所以，正常情况下我们还是要采用第二种策略，即：主动死锁检测，而且 innodb_deadlock_detect 的默认值本身就是 on。主动死锁检测在发生死锁的时候，是能够快速发现并进行处理的，但是它也是有额外负担的。每当一个事务被锁主的时候，就要看看它所依赖的线程有没有被别人锁住，如此循环，最后判断是否出现了循环等待，也就是死锁，这个过程在随着并发线程的增加，会消耗大量的 CPU 资源。对于这种热点数据更新的问题可以考虑将死锁检测临时关掉，或者控制并发度，以减少对 CPU 资源的消耗。</p>
+</li>
+</ul>
+<h1 id="索引"><a href="#索引" class="headerlink" title="索引"></a>索引</h1><ul>
+<li>索引的出现就是为了提高数据的查询效率，承担书籍目录的功能。实现索引的方式有很多种，所以就有了索引模型的概念，可以用于提高读写效率的数据结构很多，例如：哈希表，有序数组和搜索树。但是哈希表这种数据结构只支持等值查询，而有序数组虽然在等值查询和范围查询中表现很不错，但是却在插入的时候变得很麻烦，而二叉搜索数作为课本中的经典数据结构，他可以将读写的时间复杂度都控制在 O(logn) 以内，不过在MySQL中，索引不仅仅是在内存中存储，还有持久化到磁盘，使用二叉搜索树存储，记录越多，数的高度就越大，导致读写磁盘的次数就增加，因为就出现了 N 叉树。以 InnoDB 为例，这个 N 差不多是 1200，因此当数的高度是4的时候，就可以存储 17亿 的数据量了，这种 N 叉叉树已经被广泛用于数据库引擎中。</li>
+</ul>
+<h2 id="InnoDB-索引模型"><a href="#InnoDB-索引模型" class="headerlink" title="InnoDB 索引模型"></a>InnoDB 索引模型</h2><ul>
+<li><p>InnoDB 中，表都是根据逐渐以索引的形式存放的，这种存储方式被称为索引组织表，InnoDB 使用了 B+ 树索引模型，所以数据都是存放在 B+ 树中的。每一个在 InnoDB 中对应一颗 B+ 树。</p>
+</li>
+<li><p>假设，我们有一个主键列为 ID 的表，表中有字段k，并且在 k 上有索引。这个表的创建语句如下：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">mysql&gt; create table T(</span><br><span class="line">  id int primary key, </span><br><span class="line">  k int not null, </span><br><span class="line">  name varchar(16),</span><br><span class="line">  index (k))engine=InnoDB;</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>表中 R1~R5 的 (ID,k) 值分别为 (100,1)、(200,2)、(300,3)、(500,5) 和 (600,6)，两棵树的示例示意图如下。<br><img src="/images/posts/mysql/4.png" alt="4"> </p>
+</li>
+<li><p>从图中看出，索引类型分为主键索引和非主键索引，主键索引叶子节点的内容是整行的数据，InnoDB 中，主键索引也被成为聚簇索引。非主键索引叶子节点的内容是主键的值，InnoDB 中，非主键索引也被称为二级索引。</p>
+</li>
+<li><p>因此在查询的时候，基于主键索引的查询只需查询一棵树，而基于非主键索引的数据要多查询一棵树。</p>
+</li>
+<li><p>B+ 树为了维护索引有序性，在插入新值的时候需要做必要的维护。以上面这个图为例，如果插入新的行 ID 值为 700，则只需要在 R5 的记录后面插入一个新记录。如果新插入的 ID 值为 400，就相对麻烦了，需要逻辑上挪动后面的数据，空出位置。</p>
+</li>
+<li><p>而更糟的情况是，如果 R5 所在的数据页已经满了，根据 B+ 树的算法，这时候需要申请一个新的数据页，然后挪动部分数据过去。这个过程称为页分裂。在这种情况下，性能自然会受影响。除了性能外，页分裂操作还影响数据页的利用率。原本放在一个页的数据，现在分到两个页中，整体空间利用率降低大约 50%。当然有分裂就有合并。当相邻两个页由于删除了数据，利用率很低之后，会将数据页做合并。合并的过程，可以认为是分裂过程的逆过程。</p>
+</li>
+<li><p>为了减少索引维护的成本，所以我们一本看到这样的建表规范：表必须包含自增主键，自增主键是指在自增列上定义的主键，在建表语句中一般这样描述：NOT NULL PRIMARY KEY AUTO_INCREMENT，插入记录的时候，可以不用指定这个自增列的值，系统会自动获取自增列的最大值并且加1作为下一条记录该列的值。</p>
+</li>
+<li><p>而当使用有业务逻辑的字段做主键，则往往不容易保证有序插入，这样会增加写数据的成本。除了性能之外，我们还可以从存储空间的角度来考虑，假设表中确实有一个唯一字段，比如字符串类型的身份证号，那应该用身份证号做主键还是自增字段呢？由于每个非主键索引树中叶子节点上都是主键的值，如果用身份证号做主键，则需要20个字节的，如果用整形做主键，只要4个字节。显然，主键长度越小，普通索引叶子节点就越小，普通索引占用的空间就越小。因此，从性能和存储空间来考虑，自增主键往往是更合理的选择。然而，当在用于缓存形式的 KV 表中，由于表只包含一个唯一索引，所以使用业务字段做主键更为划算。</p>
+</li>
+<li><p>在重建索引的时候，重建普通索引可以按如下的流程操作：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">alter table T drop index;</span><br><span class="line">alter table T add index(k);</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>重建主键索引则需要：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">alter table T engine=InnoDB;</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>因为删除或者创建主键都会重建表，按照普通索引的重建做法，第一个流程就白执行了</p>
+</li>
+</ul>
+<h2 id="覆盖索引"><a href="#覆盖索引" class="headerlink" title="覆盖索引"></a>覆盖索引</h2><ul>
+<li><p>基于前面的讨论，继续探讨对于下下面这个表：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">mysql&gt; create table T (</span><br><span class="line">ID int primary key,</span><br><span class="line">k int NOT NULL DEFAULT 0, </span><br><span class="line">s varchar(16) NOT NULL DEFAULT <span class="string">''</span>,</span><br><span class="line">index k(k))</span><br><span class="line">engine=InnoDB;</span><br><span class="line"></span><br><span class="line">insert into T values(100,1, <span class="string">'aa'</span>),(200,2,<span class="string">'bb'</span>),(300,3,<span class="string">'cc'</span>),(500,5,<span class="string">'ee'</span>),(600,6,<span class="string">'ff'</span>),(700,7,<span class="string">'gg'</span>);</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>在执行语句 select * from T where k between 3 and 5 时，是按照下面的顺序操作的：</p>
+<ul>
+<li>在以 k 列值构建的索引上找到 k=3 的记录，取得 ID=300;</li>
+<li>再到 ID 索引数上找到 ID=300 对应的行；</li>
+<li>在 k 索引树取下一个值 k=5，取得 ID=500；</li>
+<li>再回到 ID 索引树查到 ID=500 对应的行；</li>
+<li>在 k 索引树取下一个值 k=6，不满足条件，结束。</li>
+</ul>
+</li>
+<li><p>这个过程中，回到主键索引树搜索的过程，我们称为回表，这个例子中，由于要查询的数据只有在主键上有，所以不得不回表。那么应该如何避免回表呢？如果执行的语句是 select ID from T where k between 3 and 5，因为 ID 的值已经在 k 索引树上了，所以就不用回表了，换句话说，这个查询里面，索引 k 已经 覆盖 了我们的查询需求，因此我们称索引 k 为覆盖索引。</p>
+</li>
+<li><p>由于覆盖索引可以减少树的搜索次数，显著提升查询性能，所以使用覆盖索引是一个常用的性能优化手段。</p>
+</li>
+<li><p>基于上面覆盖索引的说明，我们讨论一个问题：在一个市民信息表中，是否有必要将身份证号和名字字段建立联合索引？</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">CREATE TABLE `tuser` (</span><br><span class="line">`id` int(11) NOT NULL,</span><br><span class="line">`id_card` varchar(32) DEFAULT NULL,</span><br><span class="line">`name` varchar(32) DEFAULT NULL,</span><br><span class="line">`age` int(11) DEFAULT NULL,</span><br><span class="line">`ismale` tinyint(1) DEFAULT NULL,</span><br><span class="line">PRIMARY KEY (`id`),</span><br><span class="line">KEY `id_card` (`id_card`),</span><br><span class="line">KEY `name_age` (`name`,`age`)</span><br><span class="line">) ENGINE=InnoDB</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>身份证号是市民的唯一标识，也就是说，如果有根据身份证号查询市民信息的需求，只要在身份证字段上建立索引就够了。而再建立一个联合索引（身份证号，姓名），是否浪费空间？但是，如果现在有需要根据身份证号查询姓名的需求，那么这个索引就变的有意义了，不用回表。但是，建立这种冗余覆盖索引，势必影响写入的效率以及加大存储空间消耗。</p>
+</li>
+</ul>
+<h2 id="最左前缀"><a href="#最左前缀" class="headerlink" title="最左前缀"></a>最左前缀</h2><ul>
+<li><p>承接上面，如果我们要再根据身份证号查询家庭住址，然后再建立一个覆盖索引（身份证号，家庭住址），那样就太。。。。不过我们可以利用 索引的最左前缀来定位记录，减少创建索引。为了说明这个概念，我们用 (name, age) 这个联合索引分析。<br><img src="/images/posts/mysql/5.png" alt="5"> </p>
+</li>
+<li><p>可以看到，索引项是按照索引定义里面出现的字段顺序排序的。当你的逻辑需求是查到所有名字是“张三”的人时，可以快速定位到 ID4，然后向后遍历得到所有需要的结果。如果你要查的是所有名字第一个字是“张”的人，你的 SQL 语句的条件是”where name like ‘张 %’”。这时，你也能够用上这个索引，查找到第一个符合条件的记录是 ID3，然后向后遍历，直到不满足条件为止。可以看到，不只是索引的全部定义，只要满足最左前缀，就可以利用索引来加速检索。这个最左前缀可以是联合索引的最左 N 个字段，也可以是字符串索引的最左 M 个字符。</p>
+</li>
+<li><p>所以，我们在建立联合索引的时候，索引字段的顺序显得比较重要了，如果通过调整顺序就能少维护一个索引，那么这个顺序应该优先采用。所以前面的问题中，联合索引（身份证号，姓名）就能支持 “根据身份真好查住址” 这个需求了。但是如果在有联合索引（a,b）的情况下，又有基于 a,b 各自的查询的时候，是需要单独为 b 创建索引的，也就是说，需要同时维护 (a,b) 和 (b) 这两个索引。</p>
+</li>
+<li><p>MySQL 5.6 引入了 索引下推（ICP），对基于最左前缀匹配的查询做了查询优化。</p>
+</li>
+</ul>
+<h2 id="普通索引和唯一索引的选择"><a href="#普通索引和唯一索引的选择" class="headerlink" title="普通索引和唯一索引的选择"></a>普通索引和唯一索引的选择</h2><ul>
+<li>我们将通过分析普通索引和唯一索引对查询和更新操作性能的影响来得出结论。</li>
+</ul>
+<h3 id="查询过程"><a href="#查询过程" class="headerlink" title="查询过程"></a>查询过程</h3><ul>
+<li><p>假设执行的查询语句是 select id from T where k=5，这个查询语句在索引树上查找的过程，先是通过 B+ 树从树根开始，按层搜索到叶子节点，然后可以再数据页内通过二分法来定位记录：</p>
+</li>
+<li><p>对于普通索引来说，查到满足条件的第一个记录之后，需要查找下一个记录，知道碰到第一个不满足 k=5 条件的记录；</p>
+</li>
+<li><p>对于唯一索引来说，由于索引定义了唯一性，查找到第一个满足条件的记录后，就会停止检索；</p>
+</li>
+<li><p>由于 InnoDB 的读写是按照数据页为单位进行读写的，也就是说，当需要读一条记录的时候，并不只是将这条记录从磁盘读出来，而是以页为单位，将其整体读入内存。在 InnoDB 中，每个数据页的大小是 16KB，所以就查询来说，二者的差距不大，对于普通索引来说，就是多了指针向下查询的过程。当然，如果 k=5 恰好是这个数据页最后的一个记录，那么取下一条记录，就需要读取下一个数据页，这个操作会稍微复杂一些。但是我们之前计算过，一个数据页可以存放近千个 key，因此出现这种情况的概率会很低。</p>
+</li>
+</ul>
+<h3 id="更新过程"><a href="#更新过程" class="headerlink" title="更新过程"></a>更新过程</h3><ul>
+<li><p>在对比普通索引和唯一索引对更新语句性能影响的问题之外，先来看一个东西，change buffer。当需要更新一个数据页时，如果数据页在内存中就直接更新，而如果这个数据页还没有在内存中的话，在不影响数据一致性的前提下，InooDB 会将这些更新操作缓存在 change buffer 中，这样就不需要从磁盘中读入这个数据页了。在下次查询需要访问这个数据页的时候，将数据页读入内存，然后执行 change buffer 中与这个页有关的操作。通过这种方式就能保证这个数据逻辑的正确性。将 change buffer 中的操作应用到原数据页，得到最新结果的过程称为 merge。除了访问这个数据页会触发 merge 外，系统有后台线程会定期 merge。在数据库正常关闭（shutdown）的过程中，也会执行 merge 操作。显然，如果能够将更新操作先记录在 change buffer，减少读磁盘，语句的执行速度会得到明显的提升。而且，数据读入内存是需要占用 buffer pool 的，所以这种方式还能够避免占用内存，提高内存利用率。</p>
+</li>
+<li><p>那么什么条件下能够使用 change buffer 呢？</p>
+</li>
+<li><p>对于唯一索引来说，所有的更新操作都要先判断这个操作是否违反唯一性约束。比如，要插入 (4,400) 这个记录，就要先判断现在表中是否已经存在 k=4 的记录，而这必须要将数据页读入内存才能判断。如果都已经读入到内存了，那直接更新内存会更快，就没必要使用 change buffer 了。因此，唯一索引的更新就不能使用 change buffer，实际上也只有普通索引可以使用。change buffer 用的是 buffer pool 里的内存，因此不能无限增大。change buffer 的大小，可以通过参数 innodb_change_buffer_max_size 来动态设置。这个参数设置为 50 的时候，表示 change buffer 的大小最多只能占用 buffer pool 的 50%。</p>
+</li>
+<li><p>了解了 change buffer 的机制，我们探究一下在这种插入一条记录的过程？</p>
+<ul>
+<li><p>如果这个记录要更新的目标页在内存中。这时 InnoDB 处理的逻辑如下：</p>
+<ul>
+<li><p>对于唯一索引，找到 3 和 5 之间的位置，判断没有冲突，插入这个值，语句执行结束；</p>
+</li>
+<li><p>对于普通索引，找到 3 和 5 之间的位置，插入这个值，语句执行结束。</p>
+</li>
+<li><p>这种情况下，普通索引和唯一索引对更新语句的性能影响差别只有一个判断。</p>
+</li>
+</ul>
+</li>
+<li><p>如果这个记录要更新的目标页不在内存中，这时，InnoDB 处理逻辑如下：</p>
+<ul>
+<li>对于唯一索引。需要将数据页读入内存，判断有没有冲突，插入新值，结束；</li>
+<li>对于普通索引，则是将更新记录在 change buffer 中，语句执行结束</li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p>将数据从磁盘读入内存涉及随机 IO 的访问，是数据库里面成本最高的操作之一。change buffer 因为减少了随机磁盘访问，所以对更新性能的提升是会很明显的。</p>
+</li>
+</ul>
+<h4 id="change-buffer-使用场景"><a href="#change-buffer-使用场景" class="headerlink" title="change buffer 使用场景"></a>change buffer 使用场景</h4><ul>
+<li><p>基于前面的介绍，change buffer 能加锁所有使用普通索引的场景吗？</p>
+</li>
+<li><p>因为 merge 的时候是真正进行数据更新的时刻，而 change buffer 的主要目的就是将记录的变更动作缓存下来，所以在一个数据页做 merge 之前，change buffer 记录的变更越多（也就是这个页面上要更新的次数越多），收益就越大。因此，对于写多读少的业务来说，页面在写完以后马上被访问到的概率比较小，此时 change buffer 的使用效果最好。这种业务模型常见的就是账单类、日志类的系统。反过来，假设一个业务的更新模式是写入之后马上会做查询，那么即使满足了条件，将更新先记录在 change buffer，但之后由于马上要访问这个数据页，会立即触发 merge 过程。这样随机访问 IO 的次数不会减少，反而增加了 change buffer 的维护代价。所以，对于这种业务模式来说，change buffer 反而起到了副作用。</p>
+</li>
+</ul>
+<h3 id="索引选择总结"><a href="#索引选择总结" class="headerlink" title="索引选择总结"></a>索引选择总结</h3><ul>
+<li>普通索引和唯一索引在查询能力上没差别的，主要考虑的是对更新性能的影响，因此建议尽量使用普通索引。如果所有的更新后面，都马上伴随着对这个记录的查询，那么你应该关闭 change buffer。而在其他情况下，change buffer 都能提升更新性能。在实际使用中，你会发现，普通索引和 change buffer 的配合使用，对于数据量大的表的更新优化还是很明显的。</li>
+</ul>
+<h2 id="字符串字段添加索引"><a href="#字符串字段添加索引" class="headerlink" title="字符串字段添加索引"></a>字符串字段添加索引</h2><ul>
+<li><p>假如我们的用户表中有两个 email 字段，我们在使用过程发现需要根据 email 查询用户，为了避免全表扫面，我们需要为这个字段添加索引，有两种方式：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">mysql&gt; alter table SUser add index index1(email);</span><br><span class="line">或者</span><br><span class="line">mysql&gt; alter table SUser add index index2(email(6));</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>前者创建的索引里面，使用了整个 email，后者只使用了 email 的前6个字符，这两种创建索引的方式对于创建的索引大小有直接影响，很明显前者更大，但是后者虽然减小了索引结构中 key 的大小，使得降低存储空间，但是在查询时会增加额外的扫描次数。接下来我们看看下面这个查询语句是如何执行的：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">select id,name,email from SUser <span class="built_in">where</span> email=<span class="string">'zhangssxyz@xxx.com'</span>;</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>如果使用的是 index1（即 email 整个字符串的索引结构），执行顺序是这样的：</p>
+<ul>
+<li>从 index1 索引树找到满足索引值是’<a href="mailto:zhangssxyz@xxx.com" target="_blank" rel="noopener">zhangssxyz@xxx.com</a>’的这条记录，取得 ID2 的值；</li>
+<li>到主键上查到主键值是 ID2 的行，判断 email 的值是正确的，将这行记录加入结果集；</li>
+<li>取 index1 索引树上刚刚查到的位置的下一条记录，发现已经不满足 email=’zhangssxyz@xxx.com’的条件了，循环结束。</li>
+</ul>
+</li>
+<li><p>这个过程中，只需要回主键索引取一次数据，所以系统认为只扫描了一行。</p>
+</li>
+<li><p>如果使用的是 index2（即 email(6) 索引结构），执行顺序是这样的：</p>
+<ul>
+<li>从 index2 索引树找到满足索引值是’zhangs’的记录，找到的第一个是 ID1；</li>
+<li>到主键上查到主键值是 ID1 的行，判断出 email 的值不是’<a href="mailto:zhangssxyz@xxx.com" target="_blank" rel="noopener">zhangssxyz@xxx.com</a>’，这行记录丢弃；</li>
+<li>取 index2 上刚刚查到的位置的下一条记录，发现仍然是’zhangs’，取出 ID2，再到 ID 索引上取整行然后判断，这次值对了，将这行记录加入结果集；</li>
+<li>重复上一步，直到在 idxe2 上取到的值不是’zhangs’时，循环结束。</li>
+</ul>
+</li>
+<li><p>通过这个对比，你很容易就可以发现，使用前缀索引后，可能会导致查询语句读数据的次数变多。实质上使用前缀索引，定义好长度，就可以做到既节省空间，又不用增加太多的查询成本。那么在给前缀字符串创建索引的时候，前缀长度如何确定？这里我们就要用到一个叫做区分度的指标了，区分度越高，重复的简直越少。因此，我们可以通过统计索引上有多少个不同的值来判断使用多长的前缀，例如我们可以这样对比：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">mysql&gt; select </span><br><span class="line">count(distinct left(email,4)）as L4,</span><br><span class="line">count(distinct left(email,5)）as L5,</span><br><span class="line">count(distinct left(email,6)）as L6,</span><br><span class="line">count(distinct left(email,7)）as L7,</span><br><span class="line">from SUser;</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>前缀索引还有另外一个缺点，就是 可能会使覆盖索引优化失效，例如查询 select id,email from SUser where email=’zhangssxyz@xxx.com’; 在使用前置索引的时候还得回表查询email。我们在对字符串字段添加索引的时候，还可以通过倒序，求hash值的方式使得较小的长度就能获得更大区分度的方式来优化。</p>
+</li>
+</ul>
+<h1 id="count"><a href="#count" class="headerlink" title="count(*)"></a>count(*)</h1><ul>
+<li><p>count(*)、count(主键 id) 和 count(1) 都表示返回满足条件的结果集的总行数；而 count(字段），则表示返回满足条件的数据行里面，参数“字段”不为 NULL 的总个数。</p>
+</li>
+<li><p>对于 count(主键 id) 来说，InnoDB 引擎会遍历整张表，把每一行的 id 值都取出来，返回给 server 层。server 层拿到 id 后，判断是不可能为空的，就按行累加。</p>
+</li>
+<li><p>对于 count(1) 来说，InnoDB 引擎遍历整张表，但不取值。server 层对于返回的每一行，放一个数字“1”进去，判断是不可能为空的，按行累加。</p>
+</li>
+<li><p>单看这两个用法的差别的话，你能对比出来，count(1) 执行得要比 count(主键 id) 快。因为从引擎返回 id 会涉及到解析数据行，以及拷贝字段值的操作。</p>
+</li>
+<li><p>对于 count(字段) 来说：</p>
+<ul>
+<li>如果这个“字段”是定义为 not null 的话，一行行地从记录里面读出这个字段，判断不能为 null，按行累加；</li>
+<li>如果这个“字段”定义允许为 null，那么执行的时候，判断到有可能是 null，还要把值取出来再判断一下，不是 null 才累加。</li>
+</ul>
+</li>
+<li><p>但是 count(<em>) 是例外，并不会把全部字段取出来，而是专门做了优化，不取值。count(</em>) 肯定不是 null，按行累加。</p>
+</li>
+<li><p>结论：按照效率排序的话，count(字段)&lt;count(主键 id)&lt;count(1)≈count()，所以我建议你，尽量使用 count()。</p>
+</li>
+</ul>
+<h1 id="最后来一个好的网址"><a href="#最后来一个好的网址" class="headerlink" title="最后来一个好的网址"></a>最后来一个好的网址</h1><ul>
+<li><a href="http://blog.fudenglong.site/2019/04/21/MySQL-%E8%87%AA%E9%97%AE%E8%87%AA%E7%AD%94/" target="_blank" rel="noopener">http://blog.fudenglong.site/2019/04/21/MySQL-%E8%87%AA%E9%97%AE%E8%87%AA%E7%AD%94/</a></li>
+</ul>
+
+      
+    </div>
+    <div class="article-footer">
+      <blockquote class="mt-2x">
+  <ul class="post-copyright list-unstyled">
+    
+    <li class="post-copyright-link hidden-xs">
+      <strong>本文链接：</strong>
+      <a href="https://overtalk.site/2019/10/12/mysql/" title="mysql学习笔记" target="_blank" rel="external">https://overtalk.site/2019/10/12/mysql/</a>
+    </li>
+    
+    <li class="post-copyright-license">
+      <strong>版权声明： </strong> 本博客所有文章除特别声明外，均采用 <a href="http://creativecommons.org/licenses/by/4.0/deed.zh" target="_blank" rel="external">CC BY 4.0 CN协议</a> 许可协议。转载请注明出处！
+    </li>
+  </ul>
+</blockquote>
+
+
+<div class="panel panel-default panel-badger">
+  <div class="panel-body">
+    <figure class="media">
+      <div class="media-left">
+        <a href="https://github.com/overtalk" target="_blank" class="img-burn thumb-sm visible-lg">
+          <img src="/images/avatar.png" class="img-rounded w-full" alt="">
+        </a>
+      </div>
+      <div class="media-body">
+        <h3 class="media-heading"><a href="https://github.com/overtalk" target="_blank"><span class="text-dark">QinHan</span><small class="ml-1x">Game Developer &amp; Designer</small></a></h3>
+        <div>当你发现自己的才华撑不起野心时，就请安静下来学习吧！</div>
+      </div>
+    </figure>
+  </div>
+</div>
+
+
+    </div>
+  </article>
+  
+    
+  <section id="comments">
+  	
+           
+    
+  </section>
+
+
+  
+</div>
+
+  <nav class="bar bar-footer clearfix" data-stick-bottom>
+  <div class="bar-inner">
+  
+  <ul class="pager pull-left">
+    
+    <li class="prev">
+      <a href="/2019/10/12/cpp-virtual/" title="C++ - Virtual关键字"><i class="icon icon-angle-left" aria-hidden="true"></i><span>&nbsp;&nbsp;上一篇</span></a>
+    </li>
+    
+    
+    <li class="next">
+      <a href="/2019/10/12/interview-go/" title="Golang 面试题"><span>下一篇&nbsp;&nbsp;</span><i class="icon icon-angle-right" aria-hidden="true"></i></a>
+    </li>
+    
+    
+  </ul>
+  
+  
+  <!-- Button trigger modal -->
+  <button type="button" class="btn btn-fancy btn-donate pop-onhover bg-gradient-warning" data-toggle="modal" data-target="#donateModal"><span>赏</span></button>
+  <!-- <div class="wave-icon wave-icon-danger btn-donate" data-toggle="modal" data-target="#donateModal">
+    <div class="wave-circle"><span class="icon"><i class="icon icon-bill"></i></span></div>
+  </div> -->
+  
+  
+  <div class="bar-right">
+    
+    <div class="share-component" data-sites="weibo,qq,wechat,facebook,twitter" data-mobile-sites="weibo,qq,qzone"></div>
+    
+  </div>
+  </div>
+</nav>
+  
+<!-- Modal -->
+<div class="modal modal-center modal-small modal-xs-full fade" id="donateModal" tabindex="-1" role="dialog">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content donate">
+      <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+      <div class="modal-body">
+        <div class="donate-box">
+          <div class="donate-head">
+            <p>感谢您的支持，我会继续努力的!</p>
+          </div>
+          <div class="tab-content">
+            <div role="tabpanel" class="tab-pane fade active in" id="alipay">
+              <div class="donate-payimg">
+                <img src="/images/donate/alipayimg.png" alt="扫码支持" title="扫一扫" />
+              </div>
+              <p class="text-muted mv">喜欢就收藏，疼爱就打赏！</p>
+              <p class="text-grey">支付宝扫一扫</p>
+            </div>
+            <div role="tabpanel" class="tab-pane fade" id="wechatpay">
+              <div class="donate-payimg">
+                <img src="/images/donate/wechatpayimg.png" alt="扫码支持" title="扫一扫" />
+              </div>
+              <p class="text-muted mv">喜欢就收藏，疼爱就打赏！</p>
+              <p class="text-grey">微信扫一扫</p>
+            </div>
+          </div>
+          <div class="donate-footer">
+            <ul class="nav nav-tabs nav-justified" role="tablist">
+              <li role="presentation" class="active">
+                <a href="#alipay" id="alipay-tab" role="tab" data-toggle="tab" aria-controls="alipay" aria-expanded="true"><i class="icon icon-alipay"></i> 支付宝</a>
+              </li>
+              <li role="presentation" class="">
+                <a href="#wechatpay" role="tab" id="wechatpay-tab" data-toggle="tab" aria-controls="wechatpay" aria-expanded="false"><i class="icon icon-wepay"></i> 微信支付</a>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+
+</main>
+
+  <footer class="footer" itemscope itemtype="http://schema.org/WPFooter">
+	
+	
+    <ul class="social-links">
+    	
+        <li><a href="https://github.com/overtalk" target="_blank" title="Github" data-toggle=tooltip data-placement=top><i class="icon icon-github"></i></a></li>
+        
+        <li><a href="/atom.xml" target="_blank" title="Rss" data-toggle=tooltip data-placement=top><i class="icon icon-rss"></i></a></li>
+        
+    </ul>
+
+    <div class="copyright">
+    	
+        <div class="publishby">
+        	Powered by <a href="https://hexo.io/" target="_blank"> Hexo </a>base on <a href="https://github.com/cofess/hexo-theme-pure" target="_blank">pure</a>.
+        </div>
+    </div>
+</footer>
+  <script src="//cdn.jsdelivr.net/npm/jquery@1.12.4/dist/jquery.min.js"></script>
+<script>
+window.jQuery || document.write('<script src="js/jquery.min.js"><\/script>')
+</script>
+<script src="/js/plugin.min.js"></script>
+<script src="/js/application.js"></script>
+
+    <script>
+(function (window) {
+    var INSIGHT_CONFIG = {
+        TRANSLATION: {
+            POSTS: '文章',
+            PAGES: '页面',
+            CATEGORIES: '分类',
+            TAGS: '标签',
+            UNTITLED: '(未命名)',
+        },
+        ROOT_URL: '/',
+        CONTENT_URL: '/content.json',
+    };
+    window.INSIGHT_CONFIG = INSIGHT_CONFIG;
+})(window);
+</script>
+<script src="/js/insight.js"></script>
+
+
+
+
+
+   
+<script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+
+
+
+   
+    
+  <!-- <link rel="stylesheet" href="https://unpkg.com/gitalk/dist/gitalk.css"> -->
+  <script src="//cdn.jsdelivr.net/npm/gitalk@1.4.0/dist/gitalk.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/blueimp-md5@2.10.0/js/md5.min.js"></script>
+  <script type="text/javascript">
+  var gitalk = new Gitalk({
+    clientID: '8b37930d2d91b16067d3',
+    clientSecret: '3e1cf0374a8d938b6e1d1c8239ff068ac5de5c96',
+    repo: 'overtalk.github.io',
+    owner: 'overtalk',
+    admin: ['overtalk'],
+    id: md5(location.pathname),
+    distractionFreeMode: true
+  })
+  gitalk.render('comments')
+  </script>
+
+      
+
+
+
+
+
+
+
+</body>
+</html>

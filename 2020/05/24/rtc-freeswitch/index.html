@@ -1,0 +1,708 @@
+<!DOCTYPE html>
+<html lang=zh>
+<head>
+  <meta charset="utf-8">
+  
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no, minimal-ui">
+  <meta name="renderer" content="webkit">
+  <meta http-equiv="Cache-Control" content="no-transform" />
+  <meta http-equiv="Cache-Control" content="no-siteapp" />
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <meta name="format-detection" content="telephone=no,email=no,adress=no">
+  <!-- Color theme for statusbar -->
+  <meta name="theme-color" content="#000000" />
+  <!-- 强制页面在当前窗口以独立页面显示,防止别人在框架里调用页面 -->
+  <meta http-equiv="window-target" content="_top" />
+  
+  
+  <title>《FreeSWITCH权威指南》解读 | Overtalk</title>
+  <meta name="description" content="读《FreeSWITCH权威指南》一书的一些笔记  一些基础的命令12# 查看 internal Profile 上面的注册用户freeswitch&amp;gt; sofia status profile internal reg  一些缩写的解释 PBX 系统 ：   什么是FreeSWITCH？ 开源的，跨平台的，伸缩性极好的，免费的，多协议的 电话软交换平台 伸缩性：从一个简单的软电话客户端 到">
+<meta name="keywords" content="rtc,freeswitch">
+<meta property="og:type" content="article">
+<meta property="og:title" content="《FreeSWITCH权威指南》解读">
+<meta property="og:url" content="https:&#x2F;&#x2F;overtalk.site&#x2F;2020&#x2F;05&#x2F;24&#x2F;rtc-freeswitch&#x2F;index.html">
+<meta property="og:site_name" content="QinHan&#39;s Site">
+<meta property="og:description" content="读《FreeSWITCH权威指南》一书的一些笔记  一些基础的命令12# 查看 internal Profile 上面的注册用户freeswitch&amp;gt; sofia status profile internal reg  一些缩写的解释 PBX 系统 ：   什么是FreeSWITCH？ 开源的，跨平台的，伸缩性极好的，免费的，多协议的 电话软交换平台 伸缩性：从一个简单的软电话客户端 到">
+<meta property="og:locale" content="zh-CN">
+<meta property="og:image" content="https:&#x2F;&#x2F;overtalk.site&#x2F;images&#x2F;posts&#x2F;rtc-freeswitch&#x2F;freeswitch-usage.png">
+<meta property="og:image" content="https:&#x2F;&#x2F;overtalk.site&#x2F;images&#x2F;posts&#x2F;rtc-freeswitch&#x2F;us-status.png">
+<meta property="og:updated_time" content="2022-07-19T07:53:37.897Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https:&#x2F;&#x2F;overtalk.site&#x2F;images&#x2F;posts&#x2F;rtc-freeswitch&#x2F;freeswitch-usage.png">
+  <!-- Canonical links -->
+  <link rel="canonical" href="https://overtalk.site/2020/05/24/rtc-freeswitch/index.html">
+  
+    <link rel="alternate" href="/atom.xml" title="QinHan&#39;s Site" type="application/atom+xml">
+  
+  
+    <link rel="icon" href="/favicon.png" type="image/x-icon">
+  
+  <link rel="stylesheet" href="/css/style.css">
+  
+  
+  
+  
+    <link rel="stylesheet" href="//cdn.jsdelivr.net/npm/gitalk@1.4.0/dist/gitalk.min.css">
+  
+</head>
+
+
+<body class="main-center theme-black" itemscope itemtype="http://schema.org/WebPage">
+  <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+  <div class="slimContent">
+    <div class="navbar-header">
+      
+      
+      <div class="profile-block text-center">
+        <a id="avatar" href="https://github.com/overtalk" target="_blank">
+          <img class="img-circle img-rotate" src="/images/avatar.png" width="200" height="200">
+        </a>
+        <h2 id="name" class="hidden-xs hidden-sm">QinHan</h2>
+        <h3 id="title" class="hidden-xs hidden-sm hidden-md">Game Developer &amp; Designer</h3>
+        <small id="location" class="text-muted hidden-xs hidden-sm"><i class="icon icon-map-marker"></i> Shanghai, China</small>
+      </div>
+      
+      <div class="search" id="search-form-wrap">
+
+    <form class="search-form sidebar-form">
+        <div class="input-group">
+            <input type="text" class="search-form-input form-control" placeholder="搜索" />
+            <span class="input-group-btn">
+                <button type="submit" class="search-form-submit btn btn-flat" onclick="return false;"><i class="icon icon-search"></i></button>
+            </span>
+        </div>
+    </form>
+    <div class="ins-search">
+  <div class="ins-search-mask"></div>
+  <div class="ins-search-container">
+    <div class="ins-input-wrapper">
+      <input type="text" class="ins-search-input" placeholder="想要查找什么..." x-webkit-speech />
+      <button type="button" class="close ins-close ins-selectable" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">×</span></button>
+    </div>
+    <div class="ins-section-wrapper">
+      <div class="ins-section-container"></div>
+    </div>
+  </div>
+</div>
+
+
+</div>
+      <button class="navbar-toggle collapsed" type="button" data-toggle="collapse" data-target="#main-navbar" aria-controls="main-navbar" aria-expanded="false">
+        <span class="sr-only">Toggle navigation</span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+    </div>
+    <nav id="main-navbar" class="collapse navbar-collapse" itemscope itemtype="http://schema.org/SiteNavigationElement" role="navigation">
+      <ul class="nav navbar-nav main-nav menu-highlight">
+        
+        
+        <li class="menu-item menu-item-home">
+          <a href="/.">
+            
+            <i class="icon icon-home-fill"></i>
+            
+            <span class="menu-title">首页</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives">
+            
+            <i class="icon icon-archives-fill"></i>
+            
+            <span class="menu-title">归档</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories">
+            
+            <i class="icon icon-folder"></i>
+            
+            <span class="menu-title">分类</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags">
+            
+            <i class="icon icon-tags"></i>
+            
+            <span class="menu-title">标签</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-repository">
+          <a href="/repository">
+            
+            <i class="icon icon-project"></i>
+            
+            <span class="menu-title">项目</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-links">
+          <a href="/links">
+            
+            <i class="icon icon-friendship"></i>
+            
+            <span class="menu-title">友链</span>
+          </a>
+        </li>
+        
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about">
+            
+            <i class="icon icon-cup-fill"></i>
+            
+            <span class="menu-title">关于</span>
+          </a>
+        </li>
+        
+      </ul>
+      
+	
+    <ul class="social-links">
+    	
+        <li><a href="https://github.com/overtalk" target="_blank" title="Github" data-toggle=tooltip data-placement=top><i class="icon icon-github"></i></a></li>
+        
+        <li><a href="/atom.xml" target="_blank" title="Rss" data-toggle=tooltip data-placement=top><i class="icon icon-rss"></i></a></li>
+        
+    </ul>
+
+    </nav>
+  </div>
+</header>
+
+  
+    <aside class="sidebar" itemscope itemtype="http://schema.org/WPSideBar">
+  <div class="slimContent">
+    
+      <div class="widget">
+    <h3 class="widget-title">公告</h3>
+    <div class="widget-body">
+        <div id="board">
+            <div class="content">
+                <p>欢迎交流与分享经验!</p><p>邮箱：qinhan_shu@163.com</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">分类</h3>
+    <div class="widget-body">
+      <ul class="category-list"><li class="category-list-item"><a class="category-list-link" href="/categories/fragment/">fragment</a><span class="category-list-count">3</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/interview/">interview</a><span class="category-list-count">4</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/jewellery/">jewellery</a><span class="category-list-count">4</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/linux/">linux</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/minio/">minio</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/mongo/">mongo</a><span class="category-list-count">1</span></li><li class="category-list-item"><a class="category-list-link" href="/categories/rtc/">rtc</a><span class="category-list-count">3</span><ul class="category-list-child"><li class="category-list-item"><a class="category-list-link" href="/categories/rtc/book/">book</a><span class="category-list-count">1</span><ul class="category-list-child"><li class="category-list-item"><a class="category-list-link" href="/categories/rtc/book/freeswitch/">freeswitch</a><span class="category-list-count">1</span></li></ul></li></ul></li><li class="category-list-item"><a class="category-list-link" href="/categories/%E7%BC%96%E7%A8%8B/">编程</a><span class="category-list-count">141</span><ul class="category-list-child"><li class="category-list-item"><a class="category-list-link" href="/categories/%E7%BC%96%E7%A8%8B/%E6%B8%B8%E6%88%8F/">游戏</a><span class="category-list-count">1</span></li></ul></li><li class="category-list-item"><a class="category-list-link" href="/categories/%E9%9A%8F%E7%AC%94/">随笔</a><span class="category-list-count">2</span></li></ul>
+    </div>
+  </div>
+
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">标签</h3>
+    <div class="widget-body">
+      <ul class="tag-list" itemprop="keywords"><li class="tag-list-item"><a class="tag-list-link" href="/tags/CI-CD/" rel="tag">CI/CD</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Docker/" rel="tag">Docker</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Golang/" rel="tag">Golang</a><span class="tag-list-count">35</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Nagle/" rel="tag">Nagle</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Network/" rel="tag">Network</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Redis/" rel="tag">Redis</a><span class="tag-list-count">6</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Redis%E5%A4%87%E4%BB%BD/" rel="tag">Redis备份</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Shadowsocks/" rel="tag">Shadowsocks</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/Socks5/" rel="tag">Socks5</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/algorithm/" rel="tag">algorithm</a><span class="tag-list-count">8</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/clion/" rel="tag">clion</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/cpp/" rel="tag">cpp</a><span class="tag-list-count">50</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/docker/" rel="tag">docker</a><span class="tag-list-count">3</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/dw/" rel="tag">dw</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/endian/" rel="tag">endian</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/epoll/" rel="tag">epoll</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/freeswitch/" rel="tag">freeswitch</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/git/" rel="tag">git</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/gpg/" rel="tag">gpg</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/interview/" rel="tag">interview</a><span class="tag-list-count">4</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/io/" rel="tag">io</a><span class="tag-list-count">3</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/ip/" rel="tag">ip</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/iptables/" rel="tag">iptables</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/k8s/" rel="tag">k8s</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/kernal/" rel="tag">kernal</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/linux/" rel="tag">linux</a><span class="tag-list-count">8</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/loadbalance/" rel="tag">loadbalance</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/lock-free/" rel="tag">lock-free</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/lua/" rel="tag">lua</a><span class="tag-list-count">9</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/mac/" rel="tag">mac</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/mongo/" rel="tag">mongo</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/mysql/" rel="tag">mysql</a><span class="tag-list-count">3</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/network/" rel="tag">network</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/python/" rel="tag">python</a><span class="tag-list-count">3</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/recastnavigation/" rel="tag">recastnavigation</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/regex/" rel="tag">regex</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/rtc/" rel="tag">rtc</a><span class="tag-list-count">3</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/service-mesh/" rel="tag">service mesh</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/shadowsocks/" rel="tag">shadowsocks</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/shell/" rel="tag">shell</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/ssh/" rel="tag">ssh</a><span class="tag-list-count">3</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/systemcall/" rel="tag">systemcall</a><span class="tag-list-count">2</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/systemd/" rel="tag">systemd</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/tcp/" rel="tag">tcp</a><span class="tag-list-count">6</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E4%B8%AA%E4%BA%BA%E7%BD%91%E7%9B%98/" rel="tag">个人网盘</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E5%B9%B6%E5%8F%91/" rel="tag">并发</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E6%B8%B8%E6%88%8F/" rel="tag">游戏</a><span class="tag-list-count">1</span></li><li class="tag-list-item"><a class="tag-list-link" href="/tags/%E9%9A%8F%E7%AC%94/" rel="tag">随笔</a><span class="tag-list-count">2</span></li></ul>
+    </div>
+  </div>
+
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">标签云</h3>
+    <div class="widget-body tagcloud">
+      <a href="/tags/CI-CD/" style="font-size: 13px;">CI/CD</a> <a href="/tags/Docker/" style="font-size: 13px;">Docker</a> <a href="/tags/Golang/" style="font-size: 13.88px;">Golang</a> <a href="/tags/Nagle/" style="font-size: 13px;">Nagle</a> <a href="/tags/Network/" style="font-size: 13px;">Network</a> <a href="/tags/Redis/" style="font-size: 13.5px;">Redis</a> <a href="/tags/Redis%E5%A4%87%E4%BB%BD/" style="font-size: 13px;">Redis备份</a> <a href="/tags/Shadowsocks/" style="font-size: 13px;">Shadowsocks</a> <a href="/tags/Socks5/" style="font-size: 13px;">Socks5</a> <a href="/tags/algorithm/" style="font-size: 13.63px;">algorithm</a> <a href="/tags/clion/" style="font-size: 13px;">clion</a> <a href="/tags/cpp/" style="font-size: 14px;">cpp</a> <a href="/tags/docker/" style="font-size: 13.25px;">docker</a> <a href="/tags/dw/" style="font-size: 13px;">dw</a> <a href="/tags/endian/" style="font-size: 13px;">endian</a> <a href="/tags/epoll/" style="font-size: 13px;">epoll</a> <a href="/tags/freeswitch/" style="font-size: 13px;">freeswitch</a> <a href="/tags/git/" style="font-size: 13px;">git</a> <a href="/tags/gpg/" style="font-size: 13px;">gpg</a> <a href="/tags/interview/" style="font-size: 13.38px;">interview</a> <a href="/tags/io/" style="font-size: 13.25px;">io</a> <a href="/tags/ip/" style="font-size: 13.13px;">ip</a> <a href="/tags/iptables/" style="font-size: 13px;">iptables</a> <a href="/tags/k8s/" style="font-size: 13px;">k8s</a> <a href="/tags/kernal/" style="font-size: 13px;">kernal</a> <a href="/tags/linux/" style="font-size: 13.63px;">linux</a> <a href="/tags/loadbalance/" style="font-size: 13.13px;">loadbalance</a> <a href="/tags/lock-free/" style="font-size: 13px;">lock-free</a> <a href="/tags/lua/" style="font-size: 13.75px;">lua</a> <a href="/tags/mac/" style="font-size: 13.13px;">mac</a> <a href="/tags/mongo/" style="font-size: 13px;">mongo</a> <a href="/tags/mysql/" style="font-size: 13.25px;">mysql</a> <a href="/tags/network/" style="font-size: 13px;">network</a> <a href="/tags/python/" style="font-size: 13.25px;">python</a> <a href="/tags/recastnavigation/" style="font-size: 13px;">recastnavigation</a> <a href="/tags/regex/" style="font-size: 13px;">regex</a> <a href="/tags/rtc/" style="font-size: 13.25px;">rtc</a> <a href="/tags/service-mesh/" style="font-size: 13px;">service mesh</a> <a href="/tags/shadowsocks/" style="font-size: 13px;">shadowsocks</a> <a href="/tags/shell/" style="font-size: 13.13px;">shell</a> <a href="/tags/ssh/" style="font-size: 13.25px;">ssh</a> <a href="/tags/systemcall/" style="font-size: 13.13px;">systemcall</a> <a href="/tags/systemd/" style="font-size: 13px;">systemd</a> <a href="/tags/tcp/" style="font-size: 13.5px;">tcp</a> <a href="/tags/%E4%B8%AA%E4%BA%BA%E7%BD%91%E7%9B%98/" style="font-size: 13px;">个人网盘</a> <a href="/tags/%E5%B9%B6%E5%8F%91/" style="font-size: 13px;">并发</a> <a href="/tags/%E6%B8%B8%E6%88%8F/" style="font-size: 13px;">游戏</a> <a href="/tags/%E9%9A%8F%E7%AC%94/" style="font-size: 13.13px;">随笔</a>
+    </div>
+  </div>
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">归档</h3>
+    <div class="widget-body">
+      <ul class="archive-list"><li class="archive-list-item"><a class="archive-list-link" href="/archives/2022/07/">七月 2022</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/02/">二月 2021</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2021/01/">一月 2021</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2020/11/">十一月 2020</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2020/10/">十月 2020</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2020/08/">八月 2020</a><span class="archive-list-count">2</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2020/07/">七月 2020</a><span class="archive-list-count">15</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2020/06/">六月 2020</a><span class="archive-list-count">3</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2020/05/">五月 2020</a><span class="archive-list-count">6</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2020/04/">四月 2020</a><span class="archive-list-count">14</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2020/03/">三月 2020</a><span class="archive-list-count">16</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2020/02/">二月 2020</a><span class="archive-list-count">15</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2020/01/">一月 2020</a><span class="archive-list-count">13</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2019/12/">十二月 2019</a><span class="archive-list-count">20</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2019/11/">十一月 2019</a><span class="archive-list-count">6</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2019/10/">十月 2019</a><span class="archive-list-count">25</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2019/09/">九月 2019</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2019/08/">八月 2019</a><span class="archive-list-count">2</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2019/07/">七月 2019</a><span class="archive-list-count">9</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2019/04/">四月 2019</a><span class="archive-list-count">2</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2019/03/">三月 2019</a><span class="archive-list-count">1</span></li><li class="archive-list-item"><a class="archive-list-link" href="/archives/2018/11/">十一月 2018</a><span class="archive-list-count">9</span></li></ul>
+    </div>
+  </div>
+
+
+    
+      
+  <div class="widget">
+    <h3 class="widget-title">最新文章</h3>
+    <div class="widget-body">
+      <ul class="recent-post-list list-unstyled no-thumbnail">
+        
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                
+              </p>
+              <p class="item-title">
+                <a href="/2022/07/19/bitmap/" class="title">bitmap</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2022-07-19T15:47:57.000Z" itemprop="datePublished">2022-07-19</time>
+              </p>
+            </div>
+          </li>
+          
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                <a class="category-link" href="/categories/%E7%BC%96%E7%A8%8B/">编程</a>
+              </p>
+              <p class="item-title">
+                <a href="/2021/02/02/recast-1/" class="title">导航网格-基础概念&amp;数据结构</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2021-02-02T16:38:43.000Z" itemprop="datePublished">2021-02-02</time>
+              </p>
+            </div>
+          </li>
+          
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                <a class="category-link" href="/categories/mongo/">mongo</a>
+              </p>
+              <p class="item-title">
+                <a href="/2021/01/19/mongo-metas/" class="title">mongo 杂记</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2021-01-19T10:22:54.000Z" itemprop="datePublished">2021-01-19</time>
+              </p>
+            </div>
+          </li>
+          
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                <a class="category-link" href="/categories/%E7%BC%96%E7%A8%8B/">编程</a>
+              </p>
+              <p class="item-title">
+                <a href="/2020/11/08/py-attribute/" class="title">Python 如何查找属性</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2020-11-08T15:21:28.000Z" itemprop="datePublished">2020-11-08</time>
+              </p>
+            </div>
+          </li>
+          
+          <li>
+            
+            <div class="item-inner">
+              <p class="item-category">
+                <a class="category-link" href="/categories/%E7%BC%96%E7%A8%8B/">编程</a>
+              </p>
+              <p class="item-title">
+                <a href="/2020/10/10/network-tcp-optimization/" class="title">Linux TCP/IP 性能调优</a>
+              </p>
+              <p class="item-date">
+                <time datetime="2020-10-10T03:51:46.000Z" itemprop="datePublished">2020-10-10</time>
+              </p>
+            </div>
+          </li>
+          
+      </ul>
+    </div>
+  </div>
+  
+
+    
+  </div>
+</aside>
+
+  
+  
+<main class="main" role="main">
+  <div class="content">
+  <article id="post-rtc-freeswitch" class="article article-type-post" itemscope itemtype="http://schema.org/BlogPosting">
+    
+    <div class="article-header">
+      
+        
+  
+    <h1 class="article-title" itemprop="name">
+      《FreeSWITCH权威指南》解读
+    </h1>
+  
+
+      
+      <div class="article-meta">
+        <span class="article-date">
+    <i class="icon icon-calendar-check"></i>
+	<a href="/2020/05/24/rtc-freeswitch/" class="article-date">
+	  <time datetime="2020-05-24T12:28:22.000Z" itemprop="datePublished">2020-05-24</time>
+	</a>
+</span>
+        
+  <span class="article-category">
+    <i class="icon icon-folder"></i>
+    <a class="article-category-link" href="/categories/rtc/">rtc</a>►<a class="article-category-link" href="/categories/rtc/book/">book</a>►<a class="article-category-link" href="/categories/rtc/book/freeswitch/">freeswitch</a>
+  </span>
+
+        
+  <span class="article-tag">
+    <i class="icon icon-tags"></i>
+	<a class="article-tag-link" href="/tags/freeswitch/" rel="tag">freeswitch</a>, <a class="article-tag-link" href="/tags/rtc/" rel="tag">rtc</a>
+  </span>
+
+
+        
+	<span class="article-read hidden-xs">
+	    <i class="icon icon-eye-fill" aria-hidden="true"></i>
+	    <span id="busuanzi_container_page_pv">
+			<span id="busuanzi_value_page_pv">0</span>
+		</span>
+	</span>
+
+
+        <span class="post-comment"><i class="icon icon-comment"></i> <a href="/2020/05/24/rtc-freeswitch/#comments" class="article-comment-link">评论</a></span>
+        
+      </div>
+    </div>
+    <div class="article-entry marked-body" itemprop="articleBody">
+      
+        <blockquote>
+<p>读《FreeSWITCH权威指南》一书的一些笔记</p>
+</blockquote>
+<h1 id="一些基础的命令"><a href="#一些基础的命令" class="headerlink" title="一些基础的命令"></a>一些基础的命令</h1><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 查看 internal Profile 上面的注册用户</span></span><br><span class="line">freeswitch&gt; sofia status profile internal reg</span><br></pre></td></tr></table></figure>
+
+<h1 id="一些缩写的解释"><a href="#一些缩写的解释" class="headerlink" title="一些缩写的解释"></a>一些缩写的解释</h1><ol>
+<li>PBX 系统 ： </li>
+</ol>
+<h1 id="什么是FreeSWITCH？"><a href="#什么是FreeSWITCH？" class="headerlink" title="什么是FreeSWITCH？"></a>什么是FreeSWITCH？</h1><ul>
+<li>开源的，跨平台的，伸缩性极好的，免费的，多协议的 <strong>电话软交换平台</strong><ol>
+<li>伸缩性：从一个简单的软电话客户端 到 运营商级的软交换设备，几乎无所不能。</li>
+<li>多协议的：支持 SIP，H323，Skype，Google Talk 等多种通信协议，并且可以与各种开源的 PBX 系统（例如：sipXecs，Call Weaver，Bayonne，YATE，Asterisk等）通信，也可以与商用的交换系统（如华为，中兴的交换机或者是思科，Avaya的交换机等）互通。</li>
+<li>FreeSWITCH 是一个 B2BUA(Back to Back User Agent)，它作为一个背靠背的用户代理帮助通信双方进行实时的语音视频通行</li>
+</ol>
+</li>
+</ul>
+<hr>
+<h1 id="如何安装-amp-运行"><a href="#如何安装-amp-运行" class="headerlink" title="如何安装 &amp; 运行"></a>如何安装 &amp; 运行</h1><h2 id="安装"><a href="#安装" class="headerlink" title="安装"></a>安装</h2><ul>
+<li>TODO</li>
+</ul>
+<h2 id="运行"><a href="#运行" class="headerlink" title="运行"></a>运行</h2><p><img src="/images/posts/rtc-freeswitch/freeswitch-usage.png" alt="FreeSWITCH启动参数"></p>
+<ul>
+<li>虽然参数众多，用到的也没有几个<ol>
+<li><code>freeswitch -nc</code> : 启动到后台</li>
+<li><code>freeswitch -nonat</code> : freeswitch默认启用uPnP(或NAT-PMP)协议，尝试进行打孔</li>
+</ol>
+</li>
+</ul>
+<h3 id="判断-freeswitch-是否运行"><a href="#判断-freeswitch-是否运行" class="headerlink" title="判断 freeswitch 是否运行"></a>判断 freeswitch 是否运行</h3><ol>
+<li>查看进程 : <code>ps aux | grep freeswitch</code></li>
+<li>查看端口 : <code>netstat -an | grep 5060</code></li>
+</ol>
+<hr>
+<h1 id="呼叫"><a href="#呼叫" class="headerlink" title="呼叫"></a>呼叫</h1><ul>
+<li>FreeSWITCH 最基础的功能</li>
+</ul>
+<h2 id="发起呼叫"><a href="#发起呼叫" class="headerlink" title="发起呼叫"></a>发起呼叫</h2><ul>
+<li>假设用户1003已经注册到freeswitch上</li>
+<li>使用 <code>originate命令</code> 发起一次呼叫，然后执行echo回声程序<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">freeswitch&gt; originate user/1003 &amp;<span class="built_in">echo</span></span><br></pre></td></tr></table></figure>
+
+</li>
+</ul>
+<h2 id="呼叫字符串"><a href="#呼叫字符串" class="headerlink" title="呼叫字符串"></a>呼叫字符串</h2><ul>
+<li>上个例子中 <code>user/1003</code> 称为呼叫字符串（Dial String，Call URL）</li>
+<li><code>user</code> 是一种特殊的呼叫字符串，后续介绍其他的呼叫字符串。</li>
+<li>命令 <code>sofia status profile internal reg</code> 可以查看已经注册的 UA 的注册信息<br><img src="/images/posts/rtc-freeswitch/us-status.png" alt="UA状态"></li>
+</ul>
+<h2 id="一些概念"><a href="#一些概念" class="headerlink" title="一些概念"></a>一些概念</h2><ul>
+<li><p>先来看一个场景：Bob 与 Alice 通话，典型的呼叫流程有如下两种</p>
+<ol>
+<li>Bob 向 FreeSWITCH 发起呼叫，FreeSWITCH 接着启动一个 UA 呼叫 Alice，两者通话。</li>
+<li>FreeSWITCH 同时呼叫 Bob 与 Alice，两者接电话之后，FreeSWITCH 将 a-leg 与 b-leg 桥接（bridge）到一起，两者通话。</li>
+</ol>
+</li>
+<li><p>上述第一种呼叫流程中，Bob 到 FreeSWITCH 的通话称为来话（注意：在这儿都是针对FreeSWITCH来说的），而 FreeSWITCH 作为一个 B2BUA 再去呼叫 Alice，就称为去话。在第二种呼叫流程中两路通话（两个leg）都是去话。</p>
+</li>
+<li><p>无论是来/去话，对每一次呼叫，FreeSWITCH都会启动一个 Session（会话，包括SIP会话），用于控制整个呼叫，它会一直持续到通话结束，其中，每个Session都控制着一个Channel（通道，又称信道），Channel是一对 UA 间通信的实体，相当于 FreeSWITCH 的一条腿，每个 Channel 都会用一个 uuid 标识。通话时，FreeSWITCH的作用是将两个Channel（a-leg 和 b-leg，通常先创建的/占主动的叫 a-leg）桥接到一起，使得双方可以通话。</p>
+</li>
+<li><p>这两路桥接的通话（两条腿）在逻辑上组成一个通话，称为一个 Call</p>
+</li>
+</ul>
+<hr>
+<h1 id="APP-与-API"><a href="#APP-与-API" class="headerlink" title="APP 与 API"></a>APP 与 API</h1><ul>
+<li><p>前面的例子中, <code>originate</code> 是 FreeSWITCH 内部的一个命令（command），用于控制 FreeSWITCH 发起一个呼叫。FreeSWITCH 的命令不仅可以在控制台上使用，也可以在各种 嵌入式脚本，Event Socket（fs_cli就是使用了ESL库） 或者 HTTP RPC 上使用，所有的命令都遵循一个抽象的接口，因而这些命令又称 API Commands。</p>
+</li>
+<li><p>echo 则是一个常用的应用程序（Application，APP），<strong>它的作用是控制一个 Channel 的一端。</strong>一个 Channel 有两端（呼叫方，被呼叫方）。</p>
+</li>
+<li><p>使用echo时。电话接通后相当于呼叫方在和 echo通话。</p>
+</li>
+<li><p>后面我们会说到，他们实际上组成了 FreeSWITCH 的一条腿（leg），这种童话称为“单腿模式（one-legged connection）”。</p>
+</li>
+<li><p>其他的一些的 app 的使用</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">freeswitch&gt; originate user/1003 &amp;park</span><br><span class="line">freeswitch&gt; originate user/1003 &amp;hold</span><br><span class="line">freeswitch&gt; originate user/1003 &amp;playback(/root/welcome.wav)</span><br><span class="line">freeswitch&gt; originate user/1003  &amp;record(/tmp/voice_of_1003.wav)</span><br></pre></td></tr></table></figure></li>
+<li><p>当我们初始化一个呼叫时候，在1003接电话之后对端必须有一个人与之对话（否则，一个Channel只有一端）</p>
+<ul>
+<li>park 可以将该电话“挂起”，相当于 Channel 特殊的一端。park 的用户体验并不好，因为1003不知道等多久才有人接电话，由于听不到任何声音，用户会奇怪到底有没有接通。</li>
+<li>hold 相对比较友好，它在等待的同时会播放音乐。</li>
+<li>playback app 可以直接播放一个特定的声音文件</li>
+<li>record app 可以直接录音</li>
+</ul>
+</li>
+<li><p>上面的例子其实都是建立一个Channel，相当于 FreeSWITCH 作为一个 UA 和 1003 进行通话。它是个一条腿（只有a-leg）的通话。大多数情况之下， FreeSWITCH 都是作为一个B2BUA来桥接两个UA进行通话的。在A接听电话以后，bridge程序可以再启动一个UA呼叫 B，如下：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">freeswitch&gt; originate user/a &amp;bridge(/user/b)</span><br></pre></td></tr></table></figure>
+</li>
+<li><p>这样就可以让a与b进行通话了。我们也可以使用另外一种方式建立他们之间的通话：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br></pre></td><td class="code"><pre><span class="line">freeswitch&gt; originate user/a  &amp;park</span><br><span class="line">freeswitch&gt; originate user/b  &amp;park</span><br><span class="line">freeswitch&gt; show channels</span><br><span class="line">freeswitch&gt; uuid_bridge &lt;a_uuid&gt; &lt;b_uuid&gt;</span><br><span class="line">``` </span><br><span class="line">- 在这，分别呼叫 a &amp; b，并把他们暂时park到一个地方。通过 `show channels` 方法得到 channel UUID，然后通过 `uuid_bridge` 命令将两个 Channel 桥接起来。</span><br><span class="line"></span><br><span class="line">- 上面我们简单介绍了</span><br><span class="line">  - 两条命令（API）：originate &amp; uuid_bridge</span><br><span class="line">  - 几个程序（APP）：<span class="built_in">echo</span> &amp; park &amp; bridge</span><br><span class="line">- uuid_bridge API 和 bridge APP 有些类似。一个是先呼叫后桥接，另外一个是先桥接后呼叫，到底有啥区别？</span><br><span class="line"></span><br><span class="line">- **简单来说：一个APP是一个程序（application），它作为一个Channel一端与另一端的UA进行通信，相当于它工作在Channel内部；而一个API则是独立于一个Channel之外的，它只能通过找到Channel的UUID来控制一个Channel（如果需要），相当于一个第三者。**这就是他们的本质区别。</span><br><span class="line"></span><br><span class="line">- 通常控制台输入的命令都是 API，而在 dialplan 中执行的程序都是 APP（dialplan中也可以执行一些特殊的API）。大部分共用的API都是在mod_commands模块中加载的，而APP则是在mod_dptools中，因而 App 又称为拨号计划工具（DialPlan Tools）。某些模块（如：mod_sofia）有自己持有的API和APP。</span><br><span class="line"></span><br><span class="line">--- </span><br><span class="line"></span><br><span class="line"><span class="comment"># FreeSWITCH 内部架构</span></span><br><span class="line">- FreeSWITCH 由一个稳定的核心（Core）及一些外围模块组成。这些外围的模块根据其功能&amp;用途分成：EndPoint，Codec，Dialplan，Application等不同的类别，如图所示：</span><br><span class="line">![FreeSWITCH架构图](/images/posts/rtc-freeswitch/freeswitch-architecture.png)</span><br><span class="line"></span><br><span class="line">-  其中，数据库的代码是在核心中实现的，但是上图中将其列出来是因为从逻辑上它是独立的。</span><br><span class="line"></span><br><span class="line">- FreeSWITCH 内部使用线程模型来处理并发请求，每个连接都是在单独的线程中进行处理，不同线程之间通过 Mutex 互斥访问共享资源，并通过消息和异步事件等方式进行通信。</span><br><span class="line"></span><br><span class="line">- FreeSWITCH的核心非常短小精悍，绝大部分应用层的功能都是在外围模块中实现。外围模块是可以动态加载（以及卸载）的，在实际应用中可以只加载用到的模块。</span><br><span class="line"></span><br><span class="line">- 外围模块通过核心提供的 Public API 与核心进行通信，而核心则通过回调（或称钩子）机制执行外围模块中的代码。</span><br><span class="line"></span><br><span class="line">- TODO ：再看看书</span><br><span class="line">- 具体的可以去看书了 </span><br><span class="line"></span><br><span class="line">--- </span><br><span class="line"></span><br><span class="line"><span class="comment"># 拨号计划</span></span><br><span class="line">- Dialplan，主要作用就是对电话进行**路由**（类似路由表），决定 &amp; 影响通话流程。</span><br><span class="line"></span><br><span class="line">- XML Dialplan 由一系列的 XML 配置文件组成，可以是静态配置的，也可以使用动态配置方式从其他服务器或者脚本中动态获取。Dialplan 又特定的结构， FreeSWITCH 通过解析相关机构，可以对 Dialplan 进行路由的呼叫，决定执行何种动作或者流程。</span><br><span class="line"></span><br><span class="line"><span class="comment">## 配置文件结构</span></span><br><span class="line">- 默认配置在 conf/dialplan 目录中。</span><br><span class="line">- 看一个 Dialplan 的完整结构：</span><br><span class="line">```xml</span><br><span class="line">      &lt;extension name=<span class="string">"Echo Test"</span>&gt;</span><br><span class="line">      &lt;!-- destination_number ：被呼叫的号码 --&gt;</span><br><span class="line">            &lt;condition field=<span class="string">"destination_number"</span> expression=<span class="string">"^echo|1234$"</span>&gt;</span><br><span class="line">                  &lt;!-- action 两个参数的含义：app + app 运行的参数 --&gt;</span><br><span class="line">                  &lt;action application=<span class="string">"answer"</span> data=<span class="string">""</span>/&gt;</span><br><span class="line">                  &lt;action application=<span class="string">"echo"</span> data=<span class="string">""</span>/&gt;</span><br><span class="line">            &lt;/condition&gt;</span><br><span class="line">      &lt;/extension&gt;</span><br></pre></td></tr></table></figure></li>
+<li><p><code>extension</code> 类似于路由表中的表项，每个 <code>extension</code> 都有一个 <code>name</code> 属性，可以为任意合法字符串，对呼叫流程没有任何影响，去一个有含义的名字，有助于在Log中找到。</p>
+</li>
+<li><p>在 <code>extension</code> 中可以对一些 <code>condition(测试条件)</code> 进行判断，如果满足测试条件所指定的表达式，则执行对于的 <code>action</code>。</p>
+</li>
+<li><p>拿上面的例子看，<code>condition(测试条件)</code> 是 <code>destination_number</code> ，表示被呼叫的号码， FreeSWITCH 会将呼入电话的号码与后面的正则表达式 <code>^echo|1234$</code> 比较，如果满足条件，则执行后面的 action。</p>
+</li>
+<li><p>第一个 action 为 answer，他是一个 app，<strong>用于对来话进行应答</strong>（由于是sip呼叫，底层返回200 ok），然后执行 echo。在这个例子中，我们呼叫1234创建了一个单腿的呼叫，与其说我们在和 FreeSWITCH 通话，还不如说在和一个 APP 通话。而 Dialplan 只是帮助我们找到这些个 APP。</p>
+</li>
+<li><p>系统默认提供的配置文件中又几个 context : default，features，public，skinny-patterns。他们分别在不同的XML配置文件中。</p>
+<ol>
+<li>default 是默认的 dialplan，一般来说注册用户都可以通过它来打电话，如拨打其他分机或者外部电话。</li>
+<li>public 一般用于接受外来呼叫，因为外部进来的呼叫是不可信的，所以要严格控制。</li>
+</ol>
+</li>
+</ul>
+<h2 id="通道变量"><a href="#通道变量" class="headerlink" title="通道变量"></a>通道变量</h2><ul>
+<li>TODO</li>
+<li>除了通道变量之外还有一些其他的东西，后续补齐</li>
+</ul>
+<hr>
+<h1 id="SIP-模块"><a href="#SIP-模块" class="headerlink" title="SIP 模块"></a>SIP 模块</h1><ul>
+<li><p>Session Initiation Protocol : 控制发起、修改和终结交互式多媒体会话的信令协议。</p>
+</li>
+<li><p>它是一个对等的协议，类似于P2P。它和 HTTP 不一样，不是CS架构。也不像传统电话那样必须要有一个中心的交换机，它可以在不需要服务器的情况下进行通信。即点对点的通信。</p>
+</li>
+<li><p>一个 Profile 就类似一个 SIP UA </p>
+</li>
+</ul>
+<hr>
+
+      
+    </div>
+    <div class="article-footer">
+      <blockquote class="mt-2x">
+  <ul class="post-copyright list-unstyled">
+    
+    <li class="post-copyright-link hidden-xs">
+      <strong>本文链接：</strong>
+      <a href="https://overtalk.site/2020/05/24/rtc-freeswitch/" title="《FreeSWITCH权威指南》解读" target="_blank" rel="external">https://overtalk.site/2020/05/24/rtc-freeswitch/</a>
+    </li>
+    
+    <li class="post-copyright-license">
+      <strong>版权声明： </strong> 本博客所有文章除特别声明外，均采用 <a href="http://creativecommons.org/licenses/by/4.0/deed.zh" target="_blank" rel="external">CC BY 4.0 CN协议</a> 许可协议。转载请注明出处！
+    </li>
+  </ul>
+</blockquote>
+
+
+<div class="panel panel-default panel-badger">
+  <div class="panel-body">
+    <figure class="media">
+      <div class="media-left">
+        <a href="https://github.com/overtalk" target="_blank" class="img-burn thumb-sm visible-lg">
+          <img src="/images/avatar.png" class="img-rounded w-full" alt="">
+        </a>
+      </div>
+      <div class="media-body">
+        <h3 class="media-heading"><a href="https://github.com/overtalk" target="_blank"><span class="text-dark">QinHan</span><small class="ml-1x">Game Developer &amp; Designer</small></a></h3>
+        <div>当你发现自己的才华撑不起野心时，就请安静下来学习吧！</div>
+      </div>
+    </figure>
+  </div>
+</div>
+
+
+    </div>
+  </article>
+  
+    
+  <section id="comments">
+  	
+           
+    
+  </section>
+
+
+  
+</div>
+
+  <nav class="bar bar-footer clearfix" data-stick-bottom>
+  <div class="bar-inner">
+  
+  <ul class="pager pull-left">
+    
+    <li class="prev">
+      <a href="/2020/06/01/endian/" title="理解字节序"><i class="icon icon-angle-left" aria-hidden="true"></i><span>&nbsp;&nbsp;上一篇</span></a>
+    </li>
+    
+    
+    <li class="next">
+      <a href="/2020/05/21/rtc-protocol/" title="VoIP 中的一些协议"><span>下一篇&nbsp;&nbsp;</span><i class="icon icon-angle-right" aria-hidden="true"></i></a>
+    </li>
+    
+    
+  </ul>
+  
+  
+  <!-- Button trigger modal -->
+  <button type="button" class="btn btn-fancy btn-donate pop-onhover bg-gradient-warning" data-toggle="modal" data-target="#donateModal"><span>赏</span></button>
+  <!-- <div class="wave-icon wave-icon-danger btn-donate" data-toggle="modal" data-target="#donateModal">
+    <div class="wave-circle"><span class="icon"><i class="icon icon-bill"></i></span></div>
+  </div> -->
+  
+  
+  <div class="bar-right">
+    
+    <div class="share-component" data-sites="weibo,qq,wechat,facebook,twitter" data-mobile-sites="weibo,qq,qzone"></div>
+    
+  </div>
+  </div>
+</nav>
+  
+<!-- Modal -->
+<div class="modal modal-center modal-small modal-xs-full fade" id="donateModal" tabindex="-1" role="dialog">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content donate">
+      <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+      <div class="modal-body">
+        <div class="donate-box">
+          <div class="donate-head">
+            <p>感谢您的支持，我会继续努力的!</p>
+          </div>
+          <div class="tab-content">
+            <div role="tabpanel" class="tab-pane fade active in" id="alipay">
+              <div class="donate-payimg">
+                <img src="/images/donate/alipayimg.png" alt="扫码支持" title="扫一扫" />
+              </div>
+              <p class="text-muted mv">喜欢就收藏，疼爱就打赏！</p>
+              <p class="text-grey">支付宝扫一扫</p>
+            </div>
+            <div role="tabpanel" class="tab-pane fade" id="wechatpay">
+              <div class="donate-payimg">
+                <img src="/images/donate/wechatpayimg.png" alt="扫码支持" title="扫一扫" />
+              </div>
+              <p class="text-muted mv">喜欢就收藏，疼爱就打赏！</p>
+              <p class="text-grey">微信扫一扫</p>
+            </div>
+          </div>
+          <div class="donate-footer">
+            <ul class="nav nav-tabs nav-justified" role="tablist">
+              <li role="presentation" class="active">
+                <a href="#alipay" id="alipay-tab" role="tab" data-toggle="tab" aria-controls="alipay" aria-expanded="true"><i class="icon icon-alipay"></i> 支付宝</a>
+              </li>
+              <li role="presentation" class="">
+                <a href="#wechatpay" role="tab" id="wechatpay-tab" data-toggle="tab" aria-controls="wechatpay" aria-expanded="false"><i class="icon icon-wepay"></i> 微信支付</a>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+
+</main>
+
+  <footer class="footer" itemscope itemtype="http://schema.org/WPFooter">
+	
+	
+    <ul class="social-links">
+    	
+        <li><a href="https://github.com/overtalk" target="_blank" title="Github" data-toggle=tooltip data-placement=top><i class="icon icon-github"></i></a></li>
+        
+        <li><a href="/atom.xml" target="_blank" title="Rss" data-toggle=tooltip data-placement=top><i class="icon icon-rss"></i></a></li>
+        
+    </ul>
+
+    <div class="copyright">
+    	
+        <div class="publishby">
+        	Powered by <a href="https://hexo.io/" target="_blank"> Hexo </a>base on <a href="https://github.com/cofess/hexo-theme-pure" target="_blank">pure</a>.
+        </div>
+    </div>
+</footer>
+  <script src="//cdn.jsdelivr.net/npm/jquery@1.12.4/dist/jquery.min.js"></script>
+<script>
+window.jQuery || document.write('<script src="js/jquery.min.js"><\/script>')
+</script>
+<script src="/js/plugin.min.js"></script>
+<script src="/js/application.js"></script>
+
+    <script>
+(function (window) {
+    var INSIGHT_CONFIG = {
+        TRANSLATION: {
+            POSTS: '文章',
+            PAGES: '页面',
+            CATEGORIES: '分类',
+            TAGS: '标签',
+            UNTITLED: '(未命名)',
+        },
+        ROOT_URL: '/',
+        CONTENT_URL: '/content.json',
+    };
+    window.INSIGHT_CONFIG = INSIGHT_CONFIG;
+})(window);
+</script>
+<script src="/js/insight.js"></script>
+
+
+
+
+
+   
+<script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+
+
+
+   
+    
+  <!-- <link rel="stylesheet" href="https://unpkg.com/gitalk/dist/gitalk.css"> -->
+  <script src="//cdn.jsdelivr.net/npm/gitalk@1.4.0/dist/gitalk.min.js"></script>
+  <script src="//cdn.jsdelivr.net/npm/blueimp-md5@2.10.0/js/md5.min.js"></script>
+  <script type="text/javascript">
+  var gitalk = new Gitalk({
+    clientID: '8b37930d2d91b16067d3',
+    clientSecret: '3e1cf0374a8d938b6e1d1c8239ff068ac5de5c96',
+    repo: 'overtalk.github.io',
+    owner: 'overtalk',
+    admin: ['overtalk'],
+    id: md5(location.pathname),
+    distractionFreeMode: true
+  })
+  gitalk.render('comments')
+  </script>
+
+      
+
+
+
+
+
+
+
+</body>
+</html>
